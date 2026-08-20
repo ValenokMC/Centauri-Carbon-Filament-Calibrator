@@ -18,7 +18,7 @@ locally-built templates.
 | `machine_preset` | The printer preset you calibrate on |
 | `print_host` | Your printer's address. Empty is normal and supported. |
 | `nozzle` | `"0.4"`. Nothing else is tested. |
-| `write_to_orca` | Whether preset writing has been permitted |
+| `write_to_orca` | Legacy compatibility field. It never grants permission; every new calibration run asks before its first preset write. |
 
 `Doctor.cmd` prints all of it, in a readable form, without changing anything.
 

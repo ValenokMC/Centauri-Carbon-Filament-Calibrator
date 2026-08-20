@@ -12,7 +12,7 @@ import os
 APP_DIR_NAME = "CentauriCarbonFilamentCalibrator"
 
 
-def data_dir():
+def data_dir(create=True):
     r"""%LOCALAPPDATA%\CentauriCarbonFilamentCalibrator, created on demand.
 
     CALIBRATOR_DATA_DIR overrides it; the test suite sets it to a temporary
@@ -24,39 +24,44 @@ def data_dir():
     else:
         local = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
         base = os.path.join(local, APP_DIR_NAME)
-    os.makedirs(base, exist_ok=True)
+    if create:
+        os.makedirs(base, exist_ok=True)
     return base
 
 
-def config_path():
-    return os.path.join(data_dir(), "config.json")
+def config_path(create=True):
+    return os.path.join(data_dir(create=create), "config.json")
 
 
-def journal_path():
-    return os.path.join(data_dir(), "Journal.csv")
+def journal_path(create=True):
+    return os.path.join(data_dir(create=create), "Journal.csv")
 
 
-def spools_dir():
-    d = os.path.join(data_dir(), "spools")
-    os.makedirs(d, exist_ok=True)
+def spools_dir(create=True):
+    d = os.path.join(data_dir(create=create), "spools")
+    if create:
+        os.makedirs(d, exist_ok=True)
     return d
 
 
-def generated_plates_dir():
-    d = os.path.join(data_dir(), "generated-plates")
-    os.makedirs(d, exist_ok=True)
+def generated_plates_dir(create=True):
+    d = os.path.join(data_dir(create=create), "generated-plates")
+    if create:
+        os.makedirs(d, exist_ok=True)
     return d
 
 
-def preset_backups_dir():
-    d = os.path.join(data_dir(), "preset-backups")
-    os.makedirs(d, exist_ok=True)
+def preset_backups_dir(create=True):
+    d = os.path.join(data_dir(create=create), "preset-backups")
+    if create:
+        os.makedirs(d, exist_ok=True)
     return d
 
 
-def logs_dir():
-    d = os.path.join(data_dir(), "logs")
-    os.makedirs(d, exist_ok=True)
+def logs_dir(create=True):
+    d = os.path.join(data_dir(create=create), "logs")
+    if create:
+        os.makedirs(d, exist_ok=True)
     return d
 
 

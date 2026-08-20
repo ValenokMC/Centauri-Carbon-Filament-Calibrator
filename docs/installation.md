@@ -75,9 +75,10 @@ you exactly where it wanted to put it.
 
 Run **`Prepare-Templates.cmd`** once.
 
-It generates the shrinkage plate immediately, then walks you through saving the
-other five out of OrcaSlicer's own calibration wizard. About ten minutes for one
-material.
+Save and import one plate from OrcaSlicer's own calibration wizard first. Its
+sanitised settings become a local donor; the program then generates the
+shrinkage project and walks you through the remaining tests. About ten minutes
+for one material.
 
 This step exists because those five are OrcaSlicer's models and their
 redistribution terms are not stated anywhere this project can point to. The full

@@ -35,6 +35,9 @@ class Session(object):
         self.folder = None
         self.base_values = {}
         self.profiles = {}
+        # Permission to write into Orca is deliberately process-local.  Never
+        # trust a value carried by an old or hand-edited config.json.
+        self.orca_write_approved = False
 
     # ------------------------------------------------------------- setup
 
@@ -69,13 +72,14 @@ class Session(object):
 
     def load_run(self):
         """Continue a run already started, or begin one for today."""
-        root = paths.spools_dir()
+        root = paths.spools_dir(create=not self.dry_run)
         existing = sorted(d for d in os.listdir(root)
                           if os.path.isdir(os.path.join(root, d))
-                          and d.endswith(" " + self.spool))
+                          and d.endswith(" " + self.spool)) if os.path.isdir(root) else []
         folder_name = existing[-1] if existing else names.spool_folder_name(self.spool)
         self.folder = names.safe_join(root, folder_name)
-        os.makedirs(self.folder, exist_ok=True)
+        if not self.dry_run:
+            os.makedirs(self.folder, exist_ok=True)
 
         path = os.path.join(self.folder, "measurements.json")
         if os.path.exists(path):
@@ -123,6 +127,15 @@ class Session(object):
         template = templates_mod.resolve(self.material, filename)
         if not template:
             return None
+        if self.dry_run:
+            # Validate that the local template really is an Orca project, but
+            # do not create a personal copy and do not open the slicer.
+            try:
+                plates.read_config(plates.read_entries(template))
+            except plates.PlateError as e:
+                c.warn("плита непригодна: %s" % e)
+                return None
+            return template
         network = {}
         if self.cfg.get("print_host"):
             network = {"print_host": self.cfg["print_host"],
@@ -151,9 +164,12 @@ class Session(object):
             c.say("  %d. %s" % (number, step))
 
         if plate_path and os.path.exists(plate_path):
-            c.say("  открываю: %s" % os.path.basename(plate_path))
-            if not orca.open_file(plate_path):
-                c.warn("Не открылось — найди файл сам: %s" % plate_path)
+            if self.dry_run:
+                c.dim("сухой прогон — шаблон найден; копия не создаётся, Orca не открывается")
+            else:
+                c.say("  открываю: %s" % os.path.basename(plate_path))
+                if not orca.open_file(plate_path):
+                    c.warn("Не открылось — найди файл сам: %s" % plate_path)
         else:
             c.warn("Проекта пока нет. Печатать так: %s" % test["print_via"])
             c.dim("Плиты собираются один раз командой Prepare-Templates.cmd — "
@@ -178,7 +194,10 @@ class Session(object):
                             for field, value in sorted(new.items()))
         c.say("  %s%s%s   %s(%s)%s" % (c.GREEN, summary, c.RESET, c.DIM, why, c.RESET))
         if test.get("after"):
-            c.say("  %s→ %s%s" % (c.YELLOW, test["after"], c.RESET))
+            if self.dry_run:
+                c.dim("в реальном прогоне: %s" % test["after"])
+            else:
+                c.say("  %s→ %s%s" % (c.YELLOW, test["after"], c.RESET))
         return True
 
     # ------------------------------------------------------------ preset
@@ -197,7 +216,12 @@ class Session(object):
 
         targets = self.preset_targets()
         steps = presets.plan(None, targets)
-        if ask:
+        # ``ask=False`` means "do not repeat the question after every plate",
+        # not "write without permission".  Approval is held only on this
+        # Session object, so even an old or hand-edited config cannot bypass
+        # the first confirmation of a new run.
+        needs_permission = ask or not self.orca_write_approved
+        if needs_permission:
             c.say("")
             c.say("  Пресет будет записан:")
             c.say(presets.describe_plan(steps))
@@ -243,6 +267,8 @@ class Session(object):
             c.ok("записан: %s" % path)
         for backup in backups:
             c.dim("прежний сохранён: %s" % backup)
+
+        self.orca_write_approved = True
 
         journal.record(journal.build_row(self.material, self.spool, self.base, fields))
         c.dim("строка ушла в %s" % paths.journal_path())
@@ -312,7 +338,12 @@ class Session(object):
 
             if choice == "__quit__":
                 self.save_measurements()
-                c.say("\nГотово. Пресет и журнал обновлены после каждого замера.")
+                if self.dry_run:
+                    c.say("\nСухой прогон завершён. Ничего не записано.")
+                elif not self.orca_write_approved:
+                    c.say("\nГотово. Замеры сохранены. Пресет и журнал не записаны.")
+                else:
+                    c.say("\nГотово. Пресет и журнал обновлены после каждого замера.")
                 return 0
             if choice == "__finish__":
                 break
@@ -345,9 +376,17 @@ class Session(object):
                   % (field, "—" if was is None else str(was), c.BOLD,
                      formulas.format_field(field, fields[field]), c.RESET))
 
-        self.save_preset(fields, ask=True)
-        c.say("")
-        c.say("OrcaSlicer читает пресеты при старте — перезапусти её, чтобы увидеть.")
+        # If a plate was accepted in this process, the current fields were
+        # already written.  Otherwise this is the first write attempt and
+        # save_preset() will still ask because this process has no approval.
+        written = None
+        if not self.orca_write_approved:
+            written = self.save_preset(fields, ask=False)
+        if self.dry_run:
+            c.say("\nСухой прогон завершён. Ничего не записано.")
+        elif self.orca_write_approved or written:
+            c.say("")
+            c.say("OrcaSlicer читает пресеты при старте — перезапусти её, чтобы увидеть.")
         return 0
 
 

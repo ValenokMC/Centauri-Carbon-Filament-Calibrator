@@ -38,7 +38,7 @@ def _read_rows(path):
 
 def previous_spools(path=None):
     """Spools calibrated before, newest first: [(material, spool, date), ...]."""
-    rows = _read_rows(path or paths.journal_path())
+    rows = _read_rows(path or paths.journal_path(create=False))
     seen, out = set(), []
     for row in reversed(rows[1:]):
         if len(row) >= 3 and (row[1], row[2]) not in seen:

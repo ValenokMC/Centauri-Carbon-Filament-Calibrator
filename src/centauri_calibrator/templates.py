@@ -58,20 +58,31 @@ NEUTRAL_FILAMENT = {
 }
 
 
-def local_templates_dir():
+def local_templates_dir(create=True):
     """Where locally built plates live. Never the repository."""
-    d = os.path.join(paths.data_dir(), "templates")
-    os.makedirs(d, exist_ok=True)
+    d = os.path.join(paths.data_dir(create=create), "templates")
+    if create:
+        os.makedirs(d, exist_ok=True)
     return d
+
+
+def _usable_project(path):
+    """A plate can only be personalised when it carries Orca settings."""
+    if not os.path.exists(path):
+        return False
+    try:
+        return plates.CONFIG_ENTRY in plates.read_entries(path)
+    except plates.PlateError:
+        return False
 
 
 def resolve(material, filename):
     """Find a plate: the user's build first, the shipped one second."""
-    local = os.path.join(local_templates_dir(), material, filename)
-    if os.path.exists(local):
+    local = os.path.join(local_templates_dir(create=False), material, filename)
+    if _usable_project(local):
         return local
     shipped = os.path.join(paths.templates_dir(), material, filename)
-    if os.path.exists(shipped):
+    if _usable_project(shipped):
         return shipped
     return None
 
@@ -91,19 +102,20 @@ def status():
 
 def build_shrinkage(material, reference_config=None):
     """Generate the shrinkage plate. Entirely our own geometry."""
+    if not reference_config:
+        raise plates.PlateError(
+            "для плиты усадки нужна конфигурация из локального проекта Orca; "
+            "сначала импортируй одну плиту из мастера")
     parts, expected = geometry.shrinkage_parts()
     target = os.path.join(local_templates_dir(), material, "2b_shrinkage.3mf")
 
-    if reference_config:
-        config = dict(reference_config)
-        config, _ = plates.strip_personal(config)
-        name = NEUTRAL_FILAMENT.get(material)
-        if name:
-            config["filament_settings_id"] = [name]
-        geometry.write_project(target, parts, config,
-                               "Калибровка: усадка (%s)" % material)
-    else:
-        geometry.write_model(target, parts, "Калибровка: усадка (%s)" % material)
+    config = dict(reference_config)
+    config, _ = plates.strip_personal(config)
+    name = NEUTRAL_FILAMENT.get(material)
+    if name:
+        config["filament_settings_id"] = [name]
+    geometry.write_project(target, parts, config,
+                           "Калибровка: усадка (%s)" % material)
 
     problems = geometry.verify(target, expected)
     return target, problems
@@ -175,7 +187,11 @@ def guide(argv=None):
 
     c.head("1. Плита усадки")
     c.dim("Эта плита наша — генерируется прямо сейчас, ничего скачивать не нужно.")
-    if c.ask_yes("Сгенерировать плиты усадки для всех материалов?", default=True):
+    if not reference:
+        c.warn("Сначала нужна одна сохранённая плита из мастера OrcaSlicer.")
+        c.dim("Первый импорт ниже станет обезличенным донором настроек; после него "
+              "плиты усадки соберутся автоматически.")
+    elif c.ask_yes("Сгенерировать плиты усадки для всех материалов?", default=True):
         for material in MATERIALS:
             target, problems = build_shrinkage(material, reference)
             if problems:
@@ -213,6 +229,19 @@ def guide(argv=None):
         c.ok("готово: %s" % target)
         if removed:
             c.dim("вычищено из копии: %s" % ", ".join(removed))
+        if reference is None:
+            reference_path, reference_removed = adopt_reference(source, material)
+            reference = _reference_config()
+            c.ok("обезличенный донор настроек: %s" % reference_path)
+            if reference_removed:
+                c.dim("вычищено из донора: %s" % ", ".join(reference_removed))
+            c.dim("Теперь собираю собственную плиту усадки для всех материалов.")
+            for shrink_material in MATERIALS:
+                shrink_target, problems = build_shrinkage(shrink_material, reference)
+                if problems:
+                    c.bad("%s: %s" % (shrink_material, "; ".join(problems)))
+                else:
+                    c.ok("%s → %s" % (shrink_material, shrink_target))
         if not c.ask_yes("Импортировать ещё одну?", default=True):
             break
 
@@ -239,14 +268,18 @@ def _reference_config():
     return None
 
 
-def adopt_reference(source):
+def adopt_reference(source, material=None):
     """Store a project saved from the user's Orca as the configuration donor.
 
     Sanitised on the way in, and kept in the data directory - never in the
     repository, never published.
     """
     target = os.path.join(paths.data_dir(), "reference-project.3mf")
-    removed = plates.sanitise_template(source, target)
+    removed = plates.sanitise_template(
+        source, target,
+        filament_settings_id=NEUTRAL_FILAMENT.get(material),
+        printer_settings_id="%s %s nozzle" % (orca.SUPPORTED_PRINTER_MODEL,
+                                              orca.SUPPORTED_NOZZLE))
     return target, removed
 
 

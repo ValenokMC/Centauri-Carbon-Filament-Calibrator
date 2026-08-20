@@ -3,6 +3,7 @@
 import json
 import os
 
+from centauri_calibrator import __main__ as cli
 from centauri_calibrator import orca, support
 
 
@@ -88,6 +89,21 @@ def test_print_host_is_found_in_the_user_machine_preset(fake_orca):
 
 def test_no_print_host_is_an_empty_dict_not_an_error(tmp_path):
     assert orca.find_print_host(str(tmp_path)) == {}
+
+
+def test_doctor_does_not_create_its_data_directory(isolated_data_dir,
+                                                    monkeypatch):
+    monkeypatch.setattr(orca, "survey", lambda: {
+        "install_dir": r"C:\Fake\OrcaSlicer",
+        "version": "2.4.2",
+        "tested_version": "2.4.2",
+        "system_profiles": 1,
+        "account_dirs": [],
+        "machine_presets": [],
+        "print_host_configured": False,
+    })
+    assert cli.cmd_doctor() == 0
+    assert not isolated_data_dir.exists()
 
 
 def test_manual_colour_change_preset_is_avoided(fake_orca, tmp_path):

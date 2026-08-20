@@ -11,8 +11,8 @@ import re
 
 import pytest
 
-from centauri_calibrator import (journal, names, orca, paths, plates, presets,
-                                 templates)
+from centauri_calibrator import (config as config_mod, geometry, journal, names,
+                                 orca, paths, plates, presets, session, templates)
 
 
 def digest(path):
@@ -212,6 +212,141 @@ def test_sanitising_removes_every_personal_key(sample_template, tmp_path):
     body = open(target, "rb").read()
     assert b"10.0.0.42" not in body
     assert b"Someones Private PLA" not in body
+
+
+def test_bare_geometry_is_not_offered_as_a_personalisable_plate(tmp_path,
+                                                                monkeypatch):
+    root = tmp_path / "shipped"
+    target = root / "PLA" / "2b_shrinkage.3mf"
+    parts, _ = geometry.shrinkage_parts()
+    geometry.write_model(str(target), parts, "bare")
+    monkeypatch.setattr(paths, "templates_dir", lambda: str(root))
+
+    assert templates.resolve("PLA", "2b_shrinkage.3mf") is None
+
+
+def test_shrinkage_plate_requires_a_local_orca_reference():
+    with pytest.raises(plates.PlateError):
+        templates.build_shrinkage("PLA")
+
+
+def test_shrinkage_plate_from_reference_is_safe_and_personalisable(sample_template,
+                                                                   tmp_path):
+    reference = plates.read_config(plates.read_entries(sample_template))
+    target, problems = templates.build_shrinkage("PLA", reference)
+    assert problems == []
+
+    info = plates.inspect(target)
+    assert plates.CONFIG_ENTRY in info["entries"]
+    assert info["print_host"] is None
+    assert info["filament_settings_id"] == ["Generic PLA @System"]
+
+    personal = plates.personalise(
+        target, "Demo PLA", {"nozzle_temperature": 215},
+        folder=str(tmp_path / "personal"),
+        network={"print_host": "10.0.0.99"}, machine_preset="My Centauri")
+    personal_info = plates.inspect(personal)
+    assert personal_info["print_host"] == "10.0.0.99"
+    assert personal_info["filament_settings_id"] == ["Demo PLA"]
+    assert personal_info["printer_settings_id"] == "My Centauri"
+
+
+def test_first_preset_write_asks_even_when_internal_call_says_no_repeat(
+        tmp_path, monkeypatch):
+    cfg = {"write_to_orca": False, "nozzle": "0.4"}
+    run = session.Session(cfg, {}, dry_run=False)
+    run.material = "PLA"
+    run.spool = "Demo PLA"
+    run.base = "Generic PLA @Elegoo Centauri"
+
+    target_dir = tmp_path / "orca" / "filament"
+    monkeypatch.setattr(orca, "filament_dirs", lambda: [str(target_dir)])
+    monkeypatch.setattr(orca, "is_running", lambda: False)
+    monkeypatch.setattr(orca, "compatible_printers", lambda nozzle: ["Centauri"])
+    monkeypatch.setattr(presets, "preset_version", lambda directories: "2.4.2")
+    monkeypatch.setattr(session.support, "maybe_show", lambda **kwargs: False)
+
+    questions = []
+    monkeypatch.setattr(session.c, "ask_yes",
+                        lambda question, default=True: questions.append(question) or False)
+    assert run.save_preset({"nozzle_temperature": 215}, ask=False) is None
+    assert questions == ["Записать?"]
+    assert not target_dir.exists()
+    assert cfg["write_to_orca"] is False
+
+    questions.clear()
+    monkeypatch.setattr(session.c, "ask_yes",
+                        lambda question, default=True: questions.append(question) or True)
+    written = run.save_preset({"nozzle_temperature": 215}, ask=False)
+    assert len(written) == 1
+    assert questions == ["Записать?"]
+    assert cfg["write_to_orca"] is False
+    assert run.orca_write_approved is True
+
+    questions.clear()
+    run.save_preset({"nozzle_temperature": 220}, ask=False)
+    assert questions == []
+
+
+def test_old_config_permission_cannot_bypass_a_new_run_confirmation(
+        tmp_path, monkeypatch):
+    cfg = {"write_to_orca": True, "nozzle": "0.4"}
+    run = session.Session(cfg, {}, dry_run=False)
+    run.material = "PLA"
+    run.spool = "Demo PLA"
+    run.base = "Generic PLA @Elegoo Centauri"
+
+    target_dir = tmp_path / "orca" / "filament"
+    monkeypatch.setattr(orca, "filament_dirs", lambda: [str(target_dir)])
+    monkeypatch.setattr(orca, "is_running", lambda: False)
+    monkeypatch.setattr(session.c, "ask_yes",
+                        lambda question, default=True: False)
+
+    assert run.save_preset({"nozzle_temperature": 215}, ask=False) is None
+    assert not target_dir.exists()
+    assert run.orca_write_approved is False
+
+
+def test_old_config_write_permission_is_normalised_to_false(tmp_path):
+    path = tmp_path / "config.json"
+    path.write_text('{"write_to_orca": true}', encoding="utf-8")
+
+    assert config_mod.load(str(path))["write_to_orca"] is False
+
+
+def test_dry_run_creates_no_spool_folder(isolated_data_dir):
+    run = session.Session({}, {}, dry_run=True)
+    run.spool = "Demo PLA"
+    run.load_run()
+    assert not isolated_data_dir.exists()
+
+
+def test_dry_run_validates_template_without_copying_or_opening(sample_template,
+                                                               tmp_path,
+                                                               monkeypatch):
+    run = session.Session({}, {}, dry_run=True)
+    run.material = "PLA"
+    run.spool = "Demo PLA"
+    run.folder = str(tmp_path / "must-not-exist")
+    monkeypatch.setattr(templates, "resolve", lambda material, filename: sample_template)
+    test = {"file": "{material}/1_temperature.3mf"}
+
+    assert run.prepare_plate(test, {}) == sample_template
+    assert not os.path.exists(run.folder)
+
+
+def test_exit_does_not_claim_a_declined_preset_was_written(monkeypatch):
+    run = session.Session({"write_to_orca": False}, {}, dry_run=False)
+    run.tests = []
+    run.measurements = {}
+    monkeypatch.setattr(run, "plate_menu", lambda computed: "__quit__")
+    monkeypatch.setattr(run, "save_measurements", lambda: None)
+    lines = []
+    monkeypatch.setattr(session.c, "say", lines.append)
+
+    assert run._loop() == 0
+    assert any("Пресет и журнал не записаны" in line for line in lines)
+    assert not any("обновлены после каждого" in line for line in lines)
 
 
 def test_shipped_templates_contain_nothing_personal():

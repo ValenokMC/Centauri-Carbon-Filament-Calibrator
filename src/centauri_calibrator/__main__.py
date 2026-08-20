@@ -36,6 +36,7 @@ def cmd_doctor():
     """Read-only diagnosis. Writes nothing, closes nothing, opens nothing."""
     from . import config as config_mod
     from . import orca, paths, plates
+    from . import templates as templates_mod
     import os
 
     c.say("%s=== Диагностика ===%s" % (c.BOLD, c.RESET))
@@ -73,22 +74,25 @@ def cmd_doctor():
           % ("да" if report["print_host_configured"] else "нет (это нормально)"))
 
     c.head("Данные")
-    c.say("  %s" % paths.data_dir())
-    for label, directory in (("катушки", paths.spools_dir()),
-                             ("плиты", paths.generated_plates_dir()),
-                             ("резервные копии", paths.preset_backups_dir())):
+    c.say("  %s" % paths.data_dir(create=False))
+    for label, directory in (("катушки", paths.spools_dir(create=False)),
+                             ("плиты", paths.generated_plates_dir(create=False)),
+                             ("резервные копии", paths.preset_backups_dir(create=False))):
         count = len(os.listdir(directory)) if os.path.isdir(directory) else 0
         c.say("     %-16s %d" % (label, count))
 
     c.head("Шаблоны плит")
-    templates = paths.templates_dir()
-    if os.path.isdir(templates):
-        found = sum(1 for _, _, files in os.walk(templates)
-                    for f in files if f.endswith(".3mf"))
-        c.say("  %s" % templates)
-        c.say("     плит: %d" % found)
-    else:
-        c.warn("шаблонов нет — собери их: Prepare-Templates.cmd")
+    template_report = templates_mod.status()
+    ready = sum(len(state["have"]) for state in template_report.values())
+    total = sum(len(state["have"]) + len(state["missing"])
+                for state in template_report.values())
+    c.say("  готовых проектов: %d из %d" % (ready, total))
+    for material, state in template_report.items():
+        c.say("     %-9s %d из %d" % (
+            material, len(state["have"]),
+            len(state["have"]) + len(state["missing"])))
+    if ready == 0:
+        c.warn("готовых проектов нет — собери их: Prepare-Templates.cmd")
 
     return 0 if report["install_dir"] else 1
 

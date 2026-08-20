@@ -14,7 +14,9 @@ DEFAULTS = {
     "machine_preset": "",         # the user's Centauri Carbon preset name
     "print_host": "",             # optional; empty is a supported setup
     "nozzle": "0.4",
-    "write_to_orca": False,       # never true until the user says so
+    # Retained for compatibility with early config files.  Permission is now
+    # process-local and this value is always normalised to False on load.
+    "write_to_orca": False,
     "templates_ready": False,
 }
 
@@ -24,7 +26,7 @@ class ConfigError(Exception):
 
 
 def load(path=None):
-    p = path or paths.config_path()
+    p = path or paths.config_path(create=False)
     if not os.path.exists(p):
         raise ConfigError("Настройка не найдена: %s\nЗапусти Setup.cmd." % p)
     try:
@@ -36,6 +38,7 @@ def load(path=None):
         raise ConfigError("%s не содержит настроек." % p)
     merged = dict(DEFAULTS)
     merged.update(data)
+    merged["write_to_orca"] = False
     return merged
 
 
@@ -72,5 +75,5 @@ def summary(cfg):
         "Профиль принтера: %s" % (cfg.get("machine_preset") or "(не выбран)"),
         "Сопло           : %s мм" % cfg.get("nozzle", "0.4"),
         "Адрес принтера  : %s" % (cfg.get("print_host") or "(не задан — отправка по сети выключена)"),
-        "Запись в Orca   : %s" % ("разрешена" if cfg.get("write_to_orca") else "не разрешена"),
+        "Запись в Orca   : только после подтверждения в каждом запуске",
     ]

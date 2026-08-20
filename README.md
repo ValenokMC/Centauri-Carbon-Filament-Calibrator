@@ -83,9 +83,10 @@ This does the bookkeeping.
 1. **Download and unpack** the [Windows ZIP](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/latest).
 2. **Run `Setup.cmd`.** It finds OrcaSlicer, your profiles, your printer preset,
    and the printer's address if you have one configured.
-3. **Run `Prepare-Templates.cmd` once.** It generates the shrinkage plate and
-   walks you through saving the other five out of OrcaSlicer's own calibration
-   wizard — see [why](#about-the-calibration-plates).
+3. **Run `Prepare-Templates.cmd` once.** Save the first test from OrcaSlicer's
+   calibration wizard; its sanitised settings become a local donor for the
+   generated shrinkage plate. Then import whichever other tests you use — see
+   [why](#about-the-calibration-plates).
 4. **Run `Калибровать.cmd`** (or `Run.cmd`). Choose a material and name the spool.
 5. **Work through the plates.** Print, measure, type the number in. The preset is
    rewritten after each accepted measurement.
@@ -169,8 +170,9 @@ Their licence is not stated anywhere this project can point to, so they are
 - `Prepare-Templates.cmd` walks you through running Orca's wizard once and
   saving the result. It sanitises what you save — removing the printer address
   and any personal preset names — and stores it in your own data folder.
-- The **shrinkage plate is generated from scratch** by this project's own code,
-  so it ships in `templates/`.
+- The **shrinkage geometry is generated from scratch** by this project's own
+  code. Its full local Orca project is assembled from the sanitised settings of
+  the first wizard plate you import; no machine settings are shipped.
 - The plates you build are yours, on your machine, from a slicer you already
   have.
 
