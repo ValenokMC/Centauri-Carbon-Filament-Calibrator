@@ -1,0 +1,125 @@
+name: Bug report
+description: Something works differently from how it is documented
+title: "[bug] "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Before you attach anything:** a `.3mf` you saved from OrcaSlicer
+        yourself may contain your printer's network address. So may your
+        OrcaSlicer profile folder. Please check, or do not attach them.
+
+        `Doctor.cmd` output is safe to paste — replace your Windows user name
+        with `USER` if you would rather not publish it.
+
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      description: Shown by `Doctor.cmd`, or the name of the ZIP you downloaded.
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+
+  - type: input
+    id: orca
+    attributes:
+      label: OrcaSlicer version
+      description: Help → About. This project is tested against 2.4.2.
+      placeholder: 2.4.2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: printer
+    attributes:
+      label: Printer model
+      options:
+        - Elegoo Centauri Carbon
+        - Elegoo Centauri Carbon 2 (not supported)
+        - Other (not supported)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: nozzle
+    attributes:
+      label: Nozzle size
+      options:
+        - 0.4 mm
+        - 0.2 mm (not supported)
+        - 0.6 mm (not supported)
+        - 0.8 mm (not supported)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: material
+    attributes:
+      label: Material
+      options: [PLA, PETG, PETG-CF, PETG-GF, ABS, ASA, PA, TPU, Other]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: test
+    attributes:
+      label: Which test
+      options:
+        - "1 — temperature"
+        - "2 — flow"
+        - "2b — shrinkage"
+        - "3 — pressure advance"
+        - "4 — max volumetric flow"
+        - "5 — retraction"
+        - "Not test-specific (setup, preset writing, templates)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: measured
+    attributes:
+      label: What you measured and what the program computed
+      placeholder: |
+        Measured 24.0 mm on the temperature tower.
+        The program said 220 °C.
+        The block at that height is labelled 215 °C.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Doctor.cmd output
+      description: Run `Doctor.cmd` and paste what it prints.
+      render: text
+
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Before submitting
+      options:
+        - label: I am not attaching a `.3mf` that I have not checked for `print_host`.
+          required: true
+        - label: I am not attaching my whole `Journal.csv` or my OrcaSlicer profile folder.
+          required: true
+        - label: There is no personal data in this report — no printer IP address, no account name, no unredacted user paths.
+          required: true

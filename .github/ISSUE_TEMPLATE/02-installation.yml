@@ -1,0 +1,93 @@
+name: Installation problem
+description: Setup, template building, or a launcher does not work
+title: "[setup] "
+labels: ["installation", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Run `Doctor.cmd` first.** It is read-only and it answers most setup
+        questions on its own. Paste its output below.
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where it stops
+      options:
+        - Python is not found
+        - OrcaSlicer is not found
+        - The Elegoo base profile is not found
+        - The wizard cannot find my printer preset
+        - No write access to the preset folder
+        - Prepare-Templates.cmd fails
+        - The preset is written but does not appear in OrcaSlicer
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 10 22H2
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      description: Run `py -3 --version`. If that fails, say so.
+      placeholder: Python 3.12.2
+    validations:
+      required: true
+
+  - type: input
+    id: orca
+    attributes:
+      label: OrcaSlicer version and install path
+      description: Replace your user name with USER if the path contains it.
+      placeholder: 2.4.2, C:\Program Files\OrcaSlicer
+    validations:
+      required: true
+
+  - type: dropdown
+    id: account
+    attributes:
+      label: Are you signed in to an OrcaSlicer account?
+      description: >
+        This decides which profile folder Orca reads, and it is the usual
+        explanation for a preset that is written but never appears.
+      options: ["Yes", "No", "I do not know"]
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Doctor.cmd output
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: What the window showed when it failed
+      render: text
+
+  - type: checkboxes
+    id: hygiene
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have replaced my Windows user name with USER in any path above, or I am happy for it to be public.
+          required: true

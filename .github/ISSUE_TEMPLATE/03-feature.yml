@@ -1,0 +1,62 @@
+name: Feature request or corrected scale
+description: Suggest something, or correct a test scale
+title: "[idea] "
+labels: ["enhancement", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two kinds of thing belong here.
+
+        **A corrected scale** is the most valuable contribution this project can
+        receive. If a tower on your printer does not match what `scales.json`
+        says, that is worth reporting even if you have already fixed it locally.
+
+        **A feature request** is welcome too, with two caveats: this project has
+        no third-party dependencies and no telemetry, and support for another
+        nozzle size or printer cannot be added without hardware to test it on.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this
+      options:
+        - A corrected or new test scale
+        - A new material
+        - A feature request
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What you are proposing
+      description: |
+        For a scale: which material, which test, what the current scale says,
+        and what your plate actually printed.
+      placeholder: |
+        PETG, retraction. scales.json has the bottom block at 1.4 mm, but on my
+        tower the bottom block measures 1.2 mm and the next 0.8.
+    validations:
+      required: true
+
+  - type: textarea
+    id: verified
+    attributes:
+      label: How you verified it
+      description: |
+        For a scale, this is the important field. What did you print, what did
+        you measure, and against what did you check it? A scale accepted without
+        this would send the next person the wrong way.
+      placeholder: |
+        Printed the retraction tower for PETG, measured each block with a
+        caliper, and cross-checked against the Calib_Retraction_tower markers in
+        the G-code the wizard produced.
+
+  - type: input
+    id: setup
+    attributes:
+      label: Your setup
+      description: OrcaSlicer version, printer, nozzle, material.
+      placeholder: OrcaSlicer 2.4.2, Centauri Carbon, 0.4 nozzle, PETG
