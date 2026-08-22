@@ -7,14 +7,9 @@ this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
+Nothing yet.
 
-- OrcaSlicer's five built-in tests now start from the live Calibration menu.
-  Saved wizard projects are rejected because reopening an ordinary 3MF silently
-  loses the temperature, pressure-advance, speed or retraction calibration mode.
-  The project-owned shrinkage bar remains included and opens automatically.
-
-## [1.0.0] — unreleased
+## [1.0.0] — 2026-08-23
 
 First public release.
 
@@ -62,6 +57,13 @@ file to edit.
 - **The scales file and the code use English identifiers.** The user-facing
   prose stays Russian. The conversion was checked by running 22 000 randomised
   inputs through the old and new formulas and comparing every result.
+
+### Fixed
+
+- OrcaSlicer's five built-in tests now start from the live Calibration menu.
+  Saved wizard projects are rejected because reopening an ordinary 3MF silently
+  loses the temperature, pressure-advance, speed or retraction calibration mode.
+  The project-owned shrinkage bar remains included and opens automatically.
 
 ### Security
 
