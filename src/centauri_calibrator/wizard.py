@@ -84,8 +84,6 @@ def step_machine_preset(cfg):
 
     if not matches:
         c.warn("Своих пресетов принтера нет — будет использован системный.")
-        c.dim("Свой пресет нужен, если хочешь отправлять печать по сети: "
-              "адрес принтера хранится только в нём.")
         return system_name
 
     if len(matches) == 1:
@@ -102,32 +100,8 @@ def step_machine_preset(cfg):
     return c.menu("Профиль принтера", items)
 
 
-def step_print_host(cfg):
-    """The address is optional, and its absence is not an error.
-
-    Plenty of people slice to a USB stick. Treating "no network printing" as a
-    broken setup would send them looking for a problem they do not have.
-    """
-    c.head("6. Адрес принтера (необязательно)")
-    found = orca.find_print_host()
-    if found:
-        c.ok("Уже настроен в Orca: %s" % found["print_host"])
-        if c.ask_yes("Использовать его для отправки плит по сети?", default=True):
-            return found["print_host"]
-        return ""
-
-    c.dim("В Orca адрес не настроен. Это нормально: без него всё работает, "
-          "плиты просто не отправляются по сети.")
-    previous = cfg.get("print_host")
-    if previous:
-        c.dim("Прежде был задан: %s" % previous)
-    if not c.ask_yes("Задать адрес принтера?", default=False):
-        return ""
-    return c.ask("IP-адрес принтера", default=previous or None)
-
-
 def step_write_access():
-    c.head("7. Права на запись")
+    c.head("6. Права на запись")
     everything_ok = True
     for directory in orca.filament_dirs():
         if presets.can_write(directory):
@@ -142,13 +116,13 @@ def step_write_access():
 
 
 def step_data_dir():
-    c.head("8. Каталог данных")
+    c.head("7. Каталог данных")
     base = paths.data_dir()
-    for directory in (paths.spools_dir(), paths.generated_plates_dir(),
-                      paths.preset_backups_dir(), paths.logs_dir()):
+    for directory in (paths.spools_dir(), paths.preset_backups_dir(),
+                      paths.logs_dir()):
         os.makedirs(directory, exist_ok=True)
     c.ok(base)
-    c.dim("Журнал, замеры, персональные плиты и резервные копии пресетов — здесь. "
+    c.dim("Журнал, замеры и резервные копии пресетов — здесь. "
           "Ничего из этого не попадает в репозиторий.")
     return base
 
@@ -167,7 +141,6 @@ def run(argv=None):
         step_system_profiles(install)
         step_user_dirs()
         machine_preset = step_machine_preset(cfg)
-        print_host = step_print_host(cfg)
         step_write_access()
         step_data_dir()
 
@@ -175,7 +148,6 @@ def run(argv=None):
             "orca_install_dir": install,
             "orca_version": version,
             "machine_preset": machine_preset,
-            "print_host": print_host,
             "nozzle": orca.SUPPORTED_NOZZLE,
         })
 

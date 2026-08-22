@@ -40,7 +40,7 @@
 ## Screenshot
 
 <div align="center">
-<img src="assets/screenshots/session.png" alt="Console showing a calibration session for a spool named ExampleBrand Demo PLA: a numbered menu of six plates, four marked complete with their computed values, two still empty, and the max flow plate opening" width="720">
+<img src="assets/screenshots/session-live-wizard.svg" alt="Console showing a calibration session for a spool named ExampleBrand Demo PLA: four completed results and instructions to start maximum-flow calibration from OrcaSlicer's live menu" width="720">
 </div>
 
 Enter a measurement, get a preset field. Stop whenever you like and pick it up
@@ -63,9 +63,9 @@ temperature, and typing the results into the right preset fields without a typo.
 This does the bookkeeping.
 
 - **It knows the order.** Flow is measured at the final temperature, pressure
-  advance at the final flow, max flow at the final PA. Each plate is prepared
-  with the values found so far, so you are always measuring your spool and not a
-  generic profile.
+  advance at the final flow, max flow at the final PA. After each accepted
+  result it updates the spool preset; select that preset in Orca's next live
+  calibration wizard.
 - **It refuses an impossible measurement.** A caliper reading off by a factor of
   ten produces a plausible-looking number that would quietly ruin every print
   made afterwards. Each formula has bounds, and rejecting the value says which
@@ -82,14 +82,11 @@ This does the bookkeeping.
 
 1. **Download and unpack** the [Windows ZIP](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/latest).
 2. **Run `Setup.cmd`.** It finds OrcaSlicer, your profiles, your printer preset,
-   and the printer's address if you have one configured.
-3. **Run `Prepare-Templates.cmd` once.** Save the first test from OrcaSlicer's
-   calibration wizard; its sanitised settings become a local donor for the
-   generated shrinkage plate. Then import whichever other tests you use — see
-   [why](#about-the-calibration-plates).
-4. **Run `Калибровать.cmd`** (or `Run.cmd`). Choose a material and name the spool.
-5. **Work through the plates.** Print, measure, type the number in. The preset is
-   rewritten after each accepted measurement.
+   and the folders where Orca reads user presets.
+3. **Run `Калибровать.cmd`** (or `Run.cmd`). Choose a material and name the spool.
+4. **Follow the screen.** For five tests it gives the exact values to enter in
+   Orca's live Calibration wizard. The included 100 mm shrinkage bar opens
+   automatically. Print, inspect or measure, then type the result.
 
 Full walkthrough: **[docs/installation.md](docs/installation.md)** ·
 Test-by-test guide: **[docs/calibration.md](docs/calibration.md)**
@@ -159,24 +156,20 @@ More: [docs/security.md](docs/security.md)
 
 ## About the calibration plates
 
-Five of the six plates per material are **OrcaSlicer's own calibration models**,
-saved out of its calibration wizard. They are good models — the blocks carry
-printed labels and real test features, bridges, overhangs, stringing
-transitions. Bare boxes would be worse in every way.
+Five of the six tests use **OrcaSlicer's own live Calibration wizard**. Its
+models carry the labels and real test features needed for a useful result.
 
 Their licence is not stated anywhere this project can point to, so they are
 **not redistributed here**. Instead:
 
-- `Prepare-Templates.cmd` walks you through running Orca's wizard once and
-  saving the result. It sanitises what you save — removing the printer address
-  and any personal preset names — and stores it in your own data folder.
-- The **shrinkage geometry is generated from scratch** by this project's own
-  code. Its full local Orca project is assembled from the sanitised settings of
-  the first wizard plate you import; no machine settings are shipped.
-- The plates you build are yours, on your machine, from a slicer you already
-  have.
-
-This costs about ten minutes, once. It is the honest way to do it.
+- Temperature, flow, pressure advance, max flow and retraction are started
+  directly from Orca's menu while the calibrator is running. **Do not save and
+  reopen them as reusable projects:** an ordinary 3MF keeps the geometry but
+  silently loses Orca's active calibration mode.
+- The **100 × 10 × 3 mm shrinkage bar is generated from scratch** by this
+  project, is included in the ZIP and opens automatically.
+- `Prepare-Templates.cmd` remains only as a compatibility shortcut explaining
+  this workflow; there is nothing to prepare or import.
 
 Details: [docs/templates.md](docs/templates.md)
 
@@ -189,9 +182,8 @@ Details: [docs/templates.md](docs/templates.md)
 ├── config.json          what setup found
 ├── Journal.csv          one row per calibrated spool
 ├── spools\              measurements, per spool, per run
-├── templates\           the plates you built
-├── generated-plates\    your personalised copies
 ├── preset-backups\      every preset replaced, timestamped
+├── support.json         date of the optional monthly support note
 └── logs\
 ```
 
@@ -209,7 +201,7 @@ published; `examples/Journal.example.csv` in the repository is entirely invented
 | The preset does not appear | Orca reads presets at start-up. Restart it. |
 | The preset appears but is not selectable | It is compatible with printer presets it knows about; re-run `Setup.cmd` after adding a printer preset. |
 | A measurement is rejected | Usually right. Read the message — it says which mistake is likely. |
-| A plate prints with the wrong filament | Templates not built yet; run `Prepare-Templates.cmd`. |
+| A test uses the wrong filament | Restart Orca after the previous result and select the updated spool preset in the live wizard. |
 
 Start with **`Doctor.cmd`** — read-only, changes nothing, and prints everything
 the program can see.
@@ -270,8 +262,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architect
 [MIT](LICENSE) © ValenokMC. No third-party runtime dependencies.
 
 Read [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) — it explains what is and
-is not redistributed here, and why the calibration plates are built locally
-rather than shipped.
+is not redistributed here, and why Orca's five tests run from its live wizard.
 
 Not affiliated with Elegoo or with the OrcaSlicer project. Both names are used
 descriptively, to say what this works with.

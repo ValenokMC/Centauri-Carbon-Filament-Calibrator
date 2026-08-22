@@ -92,11 +92,13 @@ is a bug worth fixing for everybody.
 
 ## The plate prints with the wrong filament settings
 
-The templates have not been built yet, or not for that material. Run
-`Prepare-Templates.cmd`.
+For Orca's five built-in tests, restart Orca after the previous accepted result
+and select the updated spool preset in the live Calibration wizard. Do not
+reopen a tower saved earlier: its geometry survives, but its active calibration
+mode does not.
 
-Without a template the program still does the arithmetic — it just tells you
-which test to run from Orca's own menu instead of opening a prepared plate.
+For shrinkage, the calibrator opens only the bare 100 mm model. Select the same
+updated spool preset before slicing it.
 
 ---
 

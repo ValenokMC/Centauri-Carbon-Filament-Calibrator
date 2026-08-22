@@ -9,7 +9,8 @@ For someone about to change the code.
               ├── config.py          │              user profile tree (read)
   session.py ─┤                      │              preset folders     (write)
               ├── scales.py ─► formulas.py   (pure)
-              ├── plates.py ─► geometry.py   (pure-ish: writes .3mf)
+              ├── templates.py ─► geometry.py (project-owned shrinkage model)
+              ├── plates.py                  (legacy 3MF safety helpers)
               ├── journal.py                 (write: Journal.csv)
               ├── presets.py                 (write: the preset, atomically)
               ├── names.py                   (pure)
@@ -31,9 +32,9 @@ takes the default, and the default is always shown.
 | `names.py` | **Pure.** Safe filenames, path containment | no |
 | `orca.py` | Discovery. Read-only except `request_close` | no |
 | `presets.py` | Building and writing the preset | the preset |
-| `plates.py` | Reading templates, writing personal copies | personal copies |
-| `geometry.py` | Building 3MF from vertices | generated plates |
-| `templates.py` | Local plate construction and sanitising | local templates |
+| `plates.py` | 3MF inspection/sanitising helpers retained for safety tests | only when called explicitly |
+| `geometry.py` | Building the project-owned shrinkage 3MF from vertices | generated models |
+| `templates.py` | Route the shrinkage model; reject saved Orca wizard projects | no in the normal workflow |
 | `journal.py` | `Journal.csv` | the journal |
 | `support.py` | Links, the 30-day rule | `support.json` |
 | `session.py` | The calibration dialog | via the above |
@@ -74,24 +75,22 @@ Structural keys and enum values are English. The prose fields — `question`,
 `unverified: true` on a test marks a number taken from typical values rather
 than measured on this printer. The dialog warns when it shows such a test.
 
-## Templates and personal copies
+## Live wizard tests and the shrinkage model
 
-The rule, and the reason:
+Orca's five dynamic calibration modes are session state, not ordinary 3MF
+project settings. Saving and reopening their geometry silently loses the
+temperature/PA/speed/retraction behaviour. `Session.prepare_plate()` therefore
+returns `None` for every filename in `templates.FROM_WIZARD`, and
+`templates.import_from_wizard()` rejects them.
 
-> A template is opened **read-only**, always. A personal copy is written into
-> the user's data directory.
+The only file automatically opened is the project-owned bare shrinkage bar.
+It is safe to reuse because it has no dynamic calibration mode and carries no
+machine, network or personal preset data. Tests cover both halves of this rule:
+saved wizard projects never open, while shipped shrinkage geometry does.
 
-A template is shared by every spool of a material and by every user of a
-release. One that picked up a person's printer address, or one spool's measured
-values, would silently poison every subsequent calibration — and in the address
-case would leak.
-
-`plates.personalise()` therefore reads the template, builds a new archive, and
-writes it somewhere else. `tests/test_safety.py` asserts the template's SHA-256
-is unchanged afterwards.
-
-Five of the six plates per material are OrcaSlicer's models and are **not
-redistributed**; `templates.py` builds them locally from the user's own Orca.
+`plates.py` still contains the old generic inspection, sanitising and
+personalisation primitives. They are useful for archive safety tests and
+backward compatibility, but they are not part of the public calibration flow.
 See [templates.md](templates.md) and `THIRD_PARTY_NOTICES.md`.
 
 ## Writing the preset

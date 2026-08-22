@@ -12,7 +12,8 @@ import re
 import pytest
 
 from centauri_calibrator import (config as config_mod, geometry, journal, names,
-                                 orca, paths, plates, presets, session, templates)
+                                 orca, paths, plates, presets, scales, session,
+                                 templates)
 
 
 def digest(path):
@@ -321,9 +322,8 @@ def test_dry_run_creates_no_spool_folder(isolated_data_dir):
     assert not isolated_data_dir.exists()
 
 
-def test_dry_run_validates_template_without_copying_or_opening(sample_template,
-                                                               tmp_path,
-                                                               monkeypatch):
+def test_saved_wizard_project_is_never_reopened(sample_template, tmp_path,
+                                                monkeypatch):
     run = session.Session({}, {}, dry_run=True)
     run.material = "PLA"
     run.spool = "Demo PLA"
@@ -331,8 +331,52 @@ def test_dry_run_validates_template_without_copying_or_opening(sample_template,
     monkeypatch.setattr(templates, "resolve", lambda material, filename: sample_template)
     test = {"file": "{material}/1_temperature.3mf"}
 
-    assert run.prepare_plate(test, {}) == sample_template
+    assert run.prepare_plate(test, {}) is None
     assert not os.path.exists(run.folder)
+
+
+def test_project_owned_shrinkage_model_is_opened_without_personalisation(
+        tmp_path, monkeypatch):
+    root = tmp_path / "shipped"
+    target = root / "PLA" / "2b_shrinkage.3mf"
+    parts, _ = geometry.shrinkage_parts()
+    geometry.write_model(str(target), parts, "shrinkage")
+    monkeypatch.setattr(paths, "templates_dir", lambda: str(root))
+
+    run = session.Session({}, {}, dry_run=False)
+    run.material = "PLA"
+    run.spool = "Demo PLA"
+
+    assert run.prepare_plate(
+        {"file": "{material}/2b_shrinkage.3mf"}, {}) == str(target)
+
+
+def test_live_wizard_instructions_show_flow_and_max_flow_scales(monkeypatch):
+    data = scales.load()
+    tests = {test["key"]: test for test in scales.tests_for(data, "PLA")}
+    run = session.Session({}, data, dry_run=True)
+    lines = []
+
+    monkeypatch.setattr(session.c, "head", lines.append)
+    monkeypatch.setattr(session.c, "say", lines.append)
+    monkeypatch.setattr(session.c, "warn", lines.append)
+    monkeypatch.setattr(session.c, "dim", lines.append)
+    monkeypatch.setattr(session.c, "ask_number", lambda *args, **kwargs: None)
+
+    assert run.enter_plate(tests["flow"], None) is False
+    assert any("-0.05 → 0.05, шаг 0.01" in line for line in lines)
+    assert any("YOLO" in line for line in lines)
+
+    lines.clear()
+    assert run.enter_plate(tests["max_flow"], None) is False
+    assert any("5.0 → 25.0, шаг 0.5" in line for line in lines)
+    assert any("Макс. объёмный расход" in line for line in lines)
+
+
+def test_import_rejects_wizard_project_that_lost_live_calibration(sample_template):
+    with pytest.raises(plates.PlateError, match="теряет режим калибровки"):
+        templates.import_from_wizard(
+            sample_template, "PLA", "1_temperature.3mf")
 
 
 def test_exit_does_not_claim_a_declined_preset_was_written(monkeypatch):

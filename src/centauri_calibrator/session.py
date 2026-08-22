@@ -16,7 +16,7 @@ import os
 
 from . import config as config_mod
 from . import console as c
-from . import formulas, journal, names, orca, paths, plates, presets, scales
+from . import formulas, journal, names, orca, paths, presets, scales
 from . import templates as templates_mod
 from . import support
 
@@ -117,44 +117,39 @@ class Session(object):
         return c.menu("Что вносим?", items)
 
     def prepare_plate(self, test, fields_so_far):
-        """This user's copy of the plate, with the values found so far."""
+        """Return only project-owned geometry that is safe to reopen.
+
+        Orca's dynamic wizard modes are intentionally not represented by a
+        saved 3MF: reopening one loses the calibration parameters silently.
+        Those tests must be started live from Orca's Calibration menu.
+        """
         file_template = test.get("file")
         if not file_template:
             return None
-        # Locally built plates win over shipped ones: five of the six are built
-        # on this machine from Orca's wizard, see templates.py.
+        # Only the project-owned shrinkage bar is safe to reopen.  Orca's five
+        # wizard tests must remain in the live session that created them.
         filename = file_template.format(material=self.material).split("/")[-1]
-        template = templates_mod.resolve(self.material, filename)
-        if not template:
+        if filename in templates_mod.FROM_WIZARD:
             return None
-        if self.dry_run:
-            # Validate that the local template really is an Orca project, but
-            # do not create a personal copy and do not open the slicer.
-            try:
-                plates.read_config(plates.read_entries(template))
-            except plates.PlateError as e:
-                c.warn("плита непригодна: %s" % e)
-                return None
-            return template
-        network = {}
-        if self.cfg.get("print_host"):
-            network = {"print_host": self.cfg["print_host"],
-                       "host_type": "elegoolink"}
-        try:
-            return plates.personalise(
-                template, self.spool, fields_so_far, folder=self.folder,
-                network=network, machine_preset=self.cfg.get("machine_preset"))
-        except plates.PlateError as e:
-            c.warn("не смог подставить филамент в плиту: %s" % e)
-            return None
+        if filename in templates_mod.GENERATED:
+            shipped = os.path.join(paths.templates_dir(), self.material, filename)
+            return shipped if os.path.exists(shipped) else None
+        return None
 
     def enter_plate(self, test, plate_path=None):
         """One plate's screen. True if a measurement was accepted."""
         params = test.get("params") or {}
         c.head("Плита %s · %s" % (test["order"], test["key"]))
-        if "start" in params:
+        if test["key"] == "flow" and "ceiling" in params:
+            c.say("  шкала: -%s → %s, шаг %s" % (
+                params["ceiling"], params["ceiling"], params.get("step", "?")))
+        elif "start" in params:
+            end = params.get("end")
+            if end is None and "step_per_mm" in params:
+                end = params.get("ceiling", params["start"] +
+                                 params["step_per_mm"] * 40)
             c.say("  шкала: %s → %s, шаг %s" % (
-                params["start"], params.get("end", "?"),
+                params["start"], "?" if end is None else end,
                 params.get("step", params.get("step_per_mm"))))
         if params.get("unverified"):
             c.warn("шкала не выверена на своей печати — сверь с башней "
@@ -165,15 +160,15 @@ class Session(object):
 
         if plate_path and os.path.exists(plate_path):
             if self.dry_run:
-                c.dim("сухой прогон — шаблон найден; копия не создаётся, Orca не открывается")
+                c.dim("сухой прогон — модель найдена; Orca не открывается")
             else:
                 c.say("  открываю: %s" % os.path.basename(plate_path))
                 if not orca.open_file(plate_path):
                     c.warn("Не открылось — найди файл сам: %s" % plate_path)
         else:
-            c.warn("Проекта пока нет. Печатать так: %s" % test["print_via"])
-            c.dim("Плиты собираются один раз командой Prepare-Templates.cmd — "
-                  "см. docs/templates.md.")
+            c.warn("Запусти тест в OrcaSlicer: %s" % test["print_via"])
+            c.dim("Используй показанные выше диапазон и шаг. Сохранённую башню")
+            c.dim("повторно не открывай: обычный 3MF не хранит режим мастера Orca.")
 
         measurement = c.ask_number(test["question"], test.get("hint"),
                                    self.measurements.get(test["key"]))

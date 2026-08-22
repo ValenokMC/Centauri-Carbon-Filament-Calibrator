@@ -1,5 +1,5 @@
 @echo off
-rem Builds the calibration plates on this machine.
+rem Compatibility launcher: explains the live OrcaSlicer calibration workflow.
 setlocal
 chcp 65001 >nul
 set "PYTHONIOENCODING=utf-8"

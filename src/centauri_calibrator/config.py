@@ -12,12 +12,11 @@ DEFAULTS = {
     "orca_version": "",
     "appdata_root": "",           # empty means "use %APPDATA%"
     "machine_preset": "",         # the user's Centauri Carbon preset name
-    "print_host": "",             # optional; empty is a supported setup
+    "print_host": "",             # legacy; live-wizard workflow ignores it
     "nozzle": "0.4",
     # Retained for compatibility with early config files.  Permission is now
     # process-local and this value is always normalised to False on load.
     "write_to_orca": False,
-    "templates_ready": False,
 }
 
 
@@ -67,13 +66,11 @@ def save(cfg, path=None):
 
 
 def summary(cfg):
-    """Lines for a human. The print host is shown because the user typed it,
-    but it is theirs and never leaves this machine."""
+    """Lines for a human."""
     return [
         "OrcaSlicer      : %s" % (cfg.get("orca_install_dir") or "(не найден)"),
         "Версия Orca     : %s" % (cfg.get("orca_version") or "неизвестна"),
         "Профиль принтера: %s" % (cfg.get("machine_preset") or "(не выбран)"),
         "Сопло           : %s мм" % cfg.get("nozzle", "0.4"),
-        "Адрес принтера  : %s" % (cfg.get("print_host") or "(не задан — отправка по сети выключена)"),
         "Запись в Orca   : только после подтверждения в каждом запуске",
     ]

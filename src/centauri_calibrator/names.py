@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Turning what the user typed into something safe to use as a filename.
 
-A spool name goes into three places that all take a path: a folder under
-spools/, a personalised .3mf under generated-plates/, and a preset .json inside
-the OrcaSlicer profile tree. A name like ``../../../autoexec`` or ``CON`` must
-not be able to escape, collide with a device, or overwrite something that
-matters.
+A spool name goes into two places that take a path: a folder under spools/ and a
+preset .json inside the OrcaSlicer profile tree. A name like
+``../../../autoexec`` or ``CON`` must not be able to escape, collide with a
+device, or overwrite something that matters.
 
 The rule is allow-list, not deny-list. Deny-lists for Windows paths are famously
 incomplete - trailing dots, trailing spaces, alternate data streams, reserved

@@ -9,14 +9,14 @@
 Written by `Setup.cmd`. To change anything, re-run it — it offers every existing
 answer as the default, so pressing Enter through the parts you do not want to
 change is safe, and it never touches your journal, your measurements or your
-locally-built templates.
+preset backups.
 
 | Key | What it is |
 |---|---|
 | `orca_install_dir` | Where OrcaSlicer is installed |
 | `orca_version` | The Elegoo profile bundle version found there |
 | `machine_preset` | The printer preset you calibrate on |
-| `print_host` | Your printer's address. Empty is normal and supported. |
+| `print_host` | Legacy field from pre-release builds. Ignored by the live-wizard workflow. |
 | `nozzle` | `"0.4"`. Nothing else is tested. |
 | `write_to_orca` | Legacy compatibility field. It never grants permission; every new calibration run asks before its first preset write. |
 
@@ -79,7 +79,7 @@ your printer.
 | `params` | The scale: what the plate actually prints. |
 | `fields` | Which preset fields the result sets. |
 | `limits` | The sanity bounds. A result outside them is refused. |
-| `file` | Template name, `{material}` substituted. |
+| `file` | Routing name. Five Orca wizard names are never reopened; the shrinkage name resolves to project-owned geometry. |
 | `question`, `hint`, `steps`, `print_via`, `after` | Shown to the user. Russian. |
 | `unverified` | `true` means the number is typical rather than measured here. The dialog warns. |
 
