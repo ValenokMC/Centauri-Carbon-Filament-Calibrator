@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Centauri Carbon Filament Calibrator session</title>
+  <desc id="desc">A Russian-language terminal session showing completed calibration results and instructions for starting the maximum-flow test from OrcaSlicer's live Calibration menu.</desc>
+  <rect width="900" height="520" rx="12" fill="#0d0f14"/>
+  <path d="M12 0h876a12 12 0 0 1 12 12v34H0V12A12 12 0 0 1 12 0z" fill="#242730"/>
+  <circle cx="22" cy="23" r="6" fill="#ff6b6b"/>
+  <circle cx="42" cy="23" r="6" fill="#f5c451"/>
+  <circle cx="62" cy="23" r="6" fill="#58c77b"/>
+  <g font-family="Consolas, 'Cascadia Mono', monospace" font-size="17">
+    <text x="86" y="29" fill="#b8bdca">Калибровать.cmd</text>
+    <text x="22" y="82" fill="#f4f5f7" font-weight="700">ExampleBrand Demo PLA · PLA</text>
+    <text x="22" y="109" fill="#a4a9b5">База: Generic PLA @Elegoo Centauri</text>
+    <text x="22" y="136" fill="#a4a9b5">Сушка перед стартом: 55 °C, 6 ч</text>
+    <text x="22" y="180" fill="#f4f5f7" font-weight="700">Что вносим?</text>
+    <text x="38" y="211" fill="#67d58b">1  плита 1 · temperature   [x] 215 / 215</text>
+    <text x="38" y="239" fill="#67d58b">2  плита 2 · flow          [x] 0.976</text>
+    <text x="38" y="267" fill="#67d58b">3  плита 2 · shrinkage     [x] 100.30%</text>
+    <text x="38" y="295" fill="#67d58b">4  плита 3 · pa            [x] 0.024</text>
+    <text x="38" y="323" fill="#a4a9b5">5  плита 4 · max_flow      [ ] —</text>
+    <text x="38" y="351" fill="#a4a9b5">6  плита 5 · retraction    [ ] —</text>
+    <text x="22" y="395" fill="#f3a344">Номер: 5</text>
+    <text x="22" y="436" fill="#f4f5f7" font-weight="700">Плита 4 · max_flow</text>
+    <text x="33" y="463" fill="#a4a9b5">шкала: 5 → 25, шаг 0.5</text>
+    <text x="33" y="491" fill="#f2c66d">Запусти в OrcaSlicer: Калибровка → Макс. объёмный расход</text>
+  </g>
+</svg>

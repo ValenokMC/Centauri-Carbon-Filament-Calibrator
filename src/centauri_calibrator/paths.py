@@ -3,7 +3,7 @@
 
 Never inside the repository, and never inside the OrcaSlicer installation.
 Everything the user accumulates - the journal, the spool measurements, the
-personalised plates, the preset backups - belongs to them and has to survive an
+preset backups and support-note date - belongs to them and has to survive an
 update that replaces the program folder wholesale.
 """
 import os
@@ -45,6 +45,7 @@ def spools_dir(create=True):
 
 
 def generated_plates_dir(create=True):
+    """Legacy location retained for old data and API compatibility."""
     d = os.path.join(data_dir(create=create), "generated-plates")
     if create:
         os.makedirs(d, exist_ok=True)

@@ -15,10 +15,12 @@ This project is built around that fact:
 
 - **Nothing shipped here contains an address.** A test opens every `.3mf` in the
   repository and asserts it; the safety scanner does the same before a release.
-- **Templates you build are sanitised on the way in.** `Prepare-Templates.cmd`
-  strips `print_host` and personal preset names from what you save out of Orca.
-- **Your address goes only into your personal copies**, in your own data folder,
-  and only if you have one configured.
+- **Saved Orca wizard projects are never imported or reopened.** The five
+  dynamic tests start directly from Orca's Calibration menu.
+- **The included shrinkage bar is bare project-owned geometry.** It contains no
+  printer, account, network or filament-preset settings.
+- An old `print_host` field in local `config.json` is ignored; the current
+  workflow does not copy it into a model.
 
 To check a `.3mf` yourself: it is a ZIP. Rename it, open it, and read
 `Metadata/project_settings.config`. Search for `print_host`.
@@ -30,7 +32,7 @@ To check a `.3mf` yourself: it is a ZIP. Rename it, open it, and read
 | ✅ `Doctor.cmd` output | Replace your Windows user name with `USER` if you prefer |
 | ✅ One row from your journal | The whole file is a record of every spool you own |
 | ✅ Your measurements and the computed values | That is the useful part of a bug report |
-| ✅ A template built by `Prepare-Templates.cmd` | Sanitised on creation |
+| ✅ The included shrinkage model | Bare project-owned geometry, scanned before release |
 | ❌ A `.3mf` you saved from Orca yourself | May carry your printer's address |
 | ❌ Your whole `Journal.csv` | Dates and brands of everything you have printed |
 | ❌ Your OrcaSlicer profile folder | Printer address and account id |
@@ -84,8 +86,8 @@ something you have not actually done would be worse than not asking.
 
 - **No telemetry.** Nothing is counted or sent anywhere. Whether you use it, and
   whether you ever opened the support link, is not knowable from here.
-- **No network access of its own.** It writes an address into a project file;
-  OrcaSlicer does the sending.
+- **No network access of its own.** OrcaSlicer or the user's USB workflow
+  handles printing.
 - **No auto-update.** It never downloads or runs anything.
 - **No third-party runtime dependencies.**
 - **The browser is never opened on its own.** `About.cmd` prints the link and

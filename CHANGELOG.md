@@ -7,7 +7,12 @@ this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- OrcaSlicer's five built-in tests now start from the live Calibration menu.
+  Saved wizard projects are rejected because reopening an ordinary 3MF silently
+  loses the temperature, pressure-advance, speed or retraction calibration mode.
+  The project-owned shrinkage bar remains included and opens automatically.
 
 ## [1.0.0] — unreleased
 
@@ -26,11 +31,9 @@ file to edit.
   folder, lets you pick among several printer presets, picks up `print_host` if
   you already configured one, and checks it can actually write. Nothing is
   written to OrcaSlicer during setup.
-- **`Prepare-Templates.cmd`** — builds the calibration plates on your machine.
-  Generates the shrinkage plate outright, and walks you through saving the other
-  five out of OrcaSlicer's own calibration wizard, sanitising each one on the way
-  in. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for why they are not
-  shipped ready-made.
+- **Live OrcaSlicer workflow.** Five tests start directly from OrcaSlicer's
+  Calibration menu; the project-owned shrinkage bar is included. The legacy
+  `Prepare-Templates.cmd` launcher now only explains this safe workflow.
 - **`Dry-Run.cmd`** — walk the entire dialog and write nothing at all.
 - **`Doctor.cmd`** — read-only diagnosis of the environment.
 - **`About.cmd`** — project links, and a way to support the author. The browser
@@ -43,13 +46,11 @@ file to edit.
 ### Changed
 
 - **User data moved to `%LOCALAPPDATA%\CentauriCarbonFilamentCalibrator\`.** The
-  journal, per-spool measurements, personalised plates and preset backups all
+  journal, per-spool measurements and preset backups all
   live outside the program folder, so an update cannot touch them. The original
   wrote them beside the scripts.
-- **Templates are opened read-only and never modified.** The personalised copy —
-  with your machine preset, your measured values and, if you have one, your
-  printer address — is written to your data directory. There is a test asserting
-  the template's hash is unchanged after personalisation.
+- **Saved Orca wizard projects are never reopened.** Their calibration mode is
+  session-only. Only the project's own bare shrinkage model opens from disk.
 - **Preset writes are atomic**, validated as JSON first, and confirmed by you
   with the exact path shown.
 - **OrcaSlicer is asked to close, never forced.** If it does not exit within the

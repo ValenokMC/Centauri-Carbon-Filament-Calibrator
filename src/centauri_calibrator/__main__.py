@@ -10,7 +10,7 @@ USAGE = """Использование:
   python -m centauri_calibrator setup      мастер настройки
   python -m centauri_calibrator doctor     диагностика окружения, ничего не менять
   python -m centauri_calibrator dry-run    пройти диалог, ничего не записывая
-  python -m centauri_calibrator templates  собрать плиты из мастера OrcaSlicer
+  python -m centauri_calibrator templates  объяснить работу моделей OrcaSlicer
   python -m centauri_calibrator about      о проекте и как поддержать автора
   python -m centauri_calibrator where      открыть каталог с данными
 
@@ -70,29 +70,26 @@ def cmd_doctor():
             c.ok(name)
     else:
         c.warn("своих пресетов нет — будет использован системный")
-    c.say("  адрес принтера настроен: %s"
-          % ("да" if report["print_host_configured"] else "нет (это нормально)"))
-
     c.head("Данные")
     c.say("  %s" % paths.data_dir(create=False))
     for label, directory in (("катушки", paths.spools_dir(create=False)),
-                             ("плиты", paths.generated_plates_dir(create=False)),
                              ("резервные копии", paths.preset_backups_dir(create=False))):
         count = len(os.listdir(directory)) if os.path.isdir(directory) else 0
         c.say("     %-16s %d" % (label, count))
 
-    c.head("Шаблоны плит")
+    c.head("Собственные модели")
     template_report = templates_mod.status()
     ready = sum(len(state["have"]) for state in template_report.values())
     total = sum(len(state["have"]) + len(state["missing"])
                 for state in template_report.values())
-    c.say("  готовых проектов: %d из %d" % (ready, total))
+    c.say("  моделей усадки: %d из %d" % (ready, total))
     for material, state in template_report.items():
         c.say("     %-9s %d из %d" % (
             material, len(state["have"]),
             len(state["have"]) + len(state["missing"])))
+    c.say("  остальные тесты: запускаются из живого мастера OrcaSlicer")
     if ready == 0:
-        c.warn("готовых проектов нет — собери их: Prepare-Templates.cmd")
+        c.warn("модели усадки отсутствуют — переустанови архив проекта")
 
     return 0 if report["install_dir"] else 1
 

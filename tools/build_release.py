@@ -49,9 +49,8 @@ INCLUDE_FILES = [
 
 INCLUDE_TREES = [
     ("src/centauri_calibrator", ".py"),
-    # The plates this project generates itself. The other five per material are
-    # built on the user's machine by Prepare-Templates.cmd - see
-    # THIRD_PARTY_NOTICES.md for why they are not shipped.
+    # Only this project's own shrinkage geometry is shipped. Orca's other five
+    # tests are started live from its Calibration menu and are not redistributed.
     ("templates", ".3mf"),
 ]
 

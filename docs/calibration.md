@@ -5,8 +5,9 @@ final temperature, pressure advance at the final flow, and max flow at the final
 pressure advance. Running them out of order produces numbers that describe a
 filament nobody has.
 
-The program prepares each plate with the values found so far, so as long as you
-follow the menu, this happens by itself.
+After each accepted result the program updates the spool preset. Restart Orca
+and select that preset in the next live Calibration wizard, so every later test
+uses the values found so far.
 
 **Before you start:** dry the filament. The program prints the recommended
 temperature and time for the material when you begin. A wet spool produces
@@ -19,6 +20,9 @@ thing again.
 
 **What it prints:** a tower, ten millimetres per block, each block five degrees
 cooler than the one below.
+
+Start **Calibration → Temperature** and enter the range and step printed by the
+calibrator. Slice and print in that live session; do not reopen a saved tower.
 
 **What you measure:** nothing, with a caliper. You look.
 
@@ -40,6 +44,9 @@ printed at the temperature of the next.
 
 **What it prints:** OrcaSlicer's flow test — a grid of tiles, each printed at a
 slightly different flow ratio, labelled with the offset from the base.
+
+Start **Calibration → Flow ratio** and choose the recommended **YOLO, step
+0.01** mode. Select the updated spool preset first.
 
 **What you measure:** again, you look. Pick the tile with the flattest top
 surface: no gaps between the extrusions, no ridges from too much material.
@@ -63,7 +70,8 @@ here would give a total near 1.96, which it refuses with an explanation.
 ## 2b. Shrinkage
 
 **What it prints:** a 100 × 10 × 3 mm bar. This is the plate this project
-generates itself.
+generates itself and opens automatically. Select the updated spool preset before
+slicing.
 
 **What you measure:** the length, with a caliper, after it has cooled to room
 temperature. Not while it is warm.
@@ -85,10 +93,13 @@ never the plastic — it is a missed axis calibration, or the wrong face measure
 **What it prints:** OrcaSlicer's PA pattern — numbered lines, each printed with
 a different pressure advance value.
 
+Start **Calibration → PA coefficient → Pattern**, select the updated spool
+preset and enter the displayed start, end and step.
+
 **What you measure:** which line has the cleanest corners. Too little PA bulges
 at a corner; too much leaves a gap just after it.
 
-**What you type:** the line number, counting from zero as printed.
+**What you type:** the PA value printed beside the best line.
 
 **Sets:** `pressure_advance`, and enables `enable_pressure_advance`.
 
@@ -97,6 +108,9 @@ at a corner; too much leaves a gap just after it.
 ## 4. Maximum volumetric flow
 
 **What it prints:** a tower in vase mode, printing faster as it rises.
+
+Start **Calibration → Max volumetric flow**, select the updated spool preset and
+enter the displayed start, end and step.
 
 **What you measure:** the height, in millimetres, at which under-extrusion
 starts — where the wall goes thin, matte, or gappy.
@@ -120,6 +134,9 @@ least the cap".
 
 **What it prints:** OrcaSlicer's retraction tower — blocks with thin connecting
 travel moves that show stringing.
+
+Start **Calibration → Retraction**, select the updated spool preset and enter
+the displayed start, end and step.
 
 **What you measure:** the height of the cleanest block, in millimetres.
 
