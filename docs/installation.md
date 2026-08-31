@@ -28,32 +28,35 @@ Do not run it from inside the ZIP.
 
 ## 4. Run the wizard
 
-Double-click **`Setup.cmd`** (or `Настроить.cmd`). Seven setup steps:
+Double-click **`Setup.cmd`** (or `Настроить.cmd`). Eight setup steps:
 
 | Step | What it does |
 |---|---|
 | 1. OrcaSlicer | Looks in the usual install locations; lets you point at it if it is elsewhere. |
-| 2. Version | Reads the Elegoo profile bundle version, and says which version this project was tested on. |
+| 2. Version | Reads the OrcaSlicer application version and the Elegoo profile bundle version separately. |
 | 3. System profiles | Counts the Elegoo filament profiles it can see. |
 | 4. User folders | Lists every OrcaSlicer account folder — usually `default`, plus one per signed-in account. |
-| 5. Printer preset | Finds your Centauri Carbon presets; asks you to choose if there are several. |
-| 6. Write access | Checks it can actually write to the preset folders. |
-| 7. Data folder | Creates your data directory. |
+| 5. Firmware | Records stock Elegoo/SDCP or OpenCentauri/COSMOS/Moonraker. |
+| 6. Printer preset | Finds the 0.4 mm Centauri preset for that firmware; asks you to choose if there are several. |
+| 7. Write access | Checks it can actually write to the preset folders. |
+| 8. Data folder | Creates your data directory. |
 
 Then a summary, and it asks whether to save.
 
 **Nothing is written to OrcaSlicer during setup.** The first write happens during
 a calibration, after its own separate confirmation.
 
-### About step 5
+### About steps 5 and 6
 
 The system profile is `Elegoo Centauri Carbon 0.4 nozzle`. Many people also
 have their own preset inheriting from it.
 
-If you have several — one per nozzle, or a variant for manual colour changes —
-the wizard asks. Choose the one you actually print with.
+If you have several — one per nozzle, firmware, or a variant for manual colour
+changes — the wizard asks. Choose the exact one you actually print with. For
+COSMOS, import its official 0.4 mm Moonraker printer profile first; setup stops
+safely if it can see only the stock Elegoo profile.
 
-### About step 6
+### About step 7
 
 If the write check fails, OrcaSlicer was probably installed by a different
 Windows user. Calibration still works — the arithmetic and measurements —
@@ -105,6 +108,8 @@ Unpack the new ZIP over the old folder. Your data, journal, measurements and
 preset backups are elsewhere and are untouched.
 
 Re-run `Setup.cmd` only if you changed something about your OrcaSlicer setup.
+That includes changing firmware, nozzle or printer preset. Existing measurements
+remain on disk, but a different machine context starts a separate run.
 
 ## Uninstalling
 

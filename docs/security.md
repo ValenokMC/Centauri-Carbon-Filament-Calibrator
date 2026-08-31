@@ -52,6 +52,19 @@ into place atomically. If anything fails, the original is untouched.
 **Nothing else.** It does not modify the OrcaSlicer installation, does not touch
 your process or machine presets, and does not change any Orca setting.
 
+## Firmware and profile separation
+
+Every measurement run records the firmware backend, nozzle, exact machine
+preset and a fingerprint of that preset. A stock-firmware run cannot be resumed
+under COSMOS, and a changed machine profile starts a new run. Old context-free
+measurements are accepted only as stock-firmware 0.4 mm data.
+
+COSMOS filament presets include the backend, nozzle and profile fingerprint in
+their filename. Their `compatible_printers` list contains only the selected
+COSMOS machine preset, so they cannot overwrite or attach themselves to the
+stock Elegoo machine by name collision. Printer addresses, web UI URLs and API
+keys are excluded from the fingerprint and are never copied into the preset.
+
 ## Closing OrcaSlicer
 
 Presets are held in memory by Orca and read only at start-up, so it has to be

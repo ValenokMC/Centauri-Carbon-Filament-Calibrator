@@ -1,3 +1,3 @@
-date;material;spool;base;temperature;flow;pressure_advance;max_flow;retraction;shrinkage;note
-2026-01-15;PLA;ExampleBrand Demo PLA;Generic PLA @Elegoo Centauri;215;0.976;0.0240;13.50;0.60;100.30%;пример, значения выдуманы
-2026-01-22;PETG;ExampleBrand Demo PETG;Generic PETG @Elegoo Centauri;240;0.942;0.0400;9.00;1.20;100.10%;пример, значения выдуманы
+date;material;spool;base;temperature;flow;pressure_advance;max_flow;retraction;shrinkage;note;run_id;firmware_backend;nozzle;machine_preset;machine_fingerprint;orca_app_version;profile_bundle_version
+2026-01-15;PLA;ExampleBrand Demo PLA;Generic PLA @Elegoo Centauri;215;0.976;0.0240;13.50;0.60;100.30%;пример, значения выдуманы;demo-stock-run;stock;0.4;Example Centauri Stock;example-stock-profile;2.4.2;02.04.00.06
+2026-01-22;PETG;ExampleBrand Demo PETG;Generic PETG @Elegoo Centauri;240;0.942;0.0400;9.00;1.20;100.10%;пример, значения выдуманы;demo-cosmos-run;cosmos;0.4;Example Centauri COSMOS;example-cosmos-profile;2.4.2;02.04.00.06

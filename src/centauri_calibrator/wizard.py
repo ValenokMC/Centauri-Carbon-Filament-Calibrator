@@ -42,14 +42,19 @@ def step_find_orca(cfg):
 
 def step_version(install):
     c.head("2. Версия")
-    version = orca.installed_version(install)
-    if version:
-        c.ok("Версия профилей Elegoo: %s" % version)
+    app_version = orca.application_version(install)
+    bundle_version = orca.profile_bundle_version(install)
+    if app_version:
+        c.ok("OrcaSlicer: %s" % app_version)
     else:
-        c.warn("Версию определить не удалось.")
+        c.warn("Версию приложения определить не удалось.")
+    if bundle_version:
+        c.ok("Пакет профилей Elegoo: %s" % bundle_version)
+    else:
+        c.warn("Версию пакета Elegoo определить не удалось.")
     c.dim("Проект проверен на OrcaSlicer %s. Другие версии не тестировались."
           % orca.TESTED_ORCA_VERSION)
-    return version or ""
+    return app_version or "", bundle_version or ""
 
 
 def step_system_profiles(install):
@@ -77,31 +82,59 @@ def step_user_dirs():
     return accounts
 
 
-def step_machine_preset(cfg):
-    c.head("5. Профиль принтера")
-    system_name, matches = orca.centauri_machine_presets()
+def step_firmware(cfg):
+    c.head("5. Прошивка")
+    current = cfg.get("firmware_backend")
+    items = [
+        (orca.BACKEND_STOCK, "Штатная Elegoo (SDCP)"),
+        (orca.BACKEND_COSMOS, "OpenCentauri / COSMOS (Moonraker)"),
+    ]
+    if current in orca.BACKENDS:
+        items.insert(0, (current, "%s   (выбрано прежде)" % current))
+    return c.menu("Что сейчас установлено", items)
+
+
+def step_machine_preset(cfg, firmware_backend):
+    c.head("6. Профиль принтера")
+    system_name, matches = orca.centauri_machine_presets(
+        backend=firmware_backend)
     c.dim("Системный профиль: %s" % system_name)
 
     if not matches:
+        if firmware_backend == orca.BACKEND_COSMOS:
+            c.bad("Профиль COSMOS/Moonraker для сопла 0.4 не найден.")
+            c.dim("Сначала импортируй официальный профиль COSMOS в OrcaSlicer, "
+                  "затем снова запусти Setup.cmd.")
+            return None, ""
         c.warn("Своих пресетов принтера нет — будет использован системный.")
-        return system_name
+        synthetic = {"name": system_name, "inherits": system_name}
+        return system_name, orca.machine_profile_fingerprint(synthetic)
 
     if len(matches) == 1:
-        name = matches[0][1]["name"]
+        node = matches[0][1]
+        name = node["name"]
         c.ok("Найден один: %s" % name)
-        return name
+        return name, orca.machine_profile_fingerprint(node)
 
     c.warn("Своих пресетов несколько — выбери, на каком калибруешь.")
-    items = [(node["name"], "%s   %s" % (node["name"], os.path.basename(path)))
+    items = [(orca.machine_profile_fingerprint(node),
+              "%s   %s" % (node["name"], os.path.basename(path)))
              for path, node in matches]
     previous = cfg.get("machine_preset")
-    if previous and any(k == previous for k, _ in items):
-        items.insert(0, (previous, "%s   (был выбран прежде)" % previous))
-    return c.menu("Профиль принтера", items)
+    previous_fingerprint = cfg.get("machine_fingerprint")
+    if previous and previous_fingerprint and any(
+            k == previous_fingerprint for k, _ in items):
+        items.insert(0, (previous_fingerprint,
+                        "%s   (был выбран прежде)" % previous))
+    selected = c.menu("Профиль принтера", items)
+    for _, node in matches:
+        if orca.machine_profile_fingerprint(node) == selected:
+            return node["name"], selected
+    return None, ""
 
 
 def step_write_access():
-    c.head("6. Права на запись")
+    c.head("7. Права на запись")
     everything_ok = True
     for directory in orca.filament_dirs():
         if presets.can_write(directory):
@@ -116,7 +149,7 @@ def step_write_access():
 
 
 def step_data_dir():
-    c.head("7. Каталог данных")
+    c.head("8. Каталог данных")
     base = paths.data_dir()
     for directory in (paths.spools_dir(), paths.preset_backups_dir(),
                       paths.logs_dir()):
@@ -137,17 +170,27 @@ def run(argv=None):
             c.bad("Без OrcaSlicer калибровать нечем. Настройка не завершена.")
             return 1
 
-        version = step_version(install)
+        app_version, bundle_version = step_version(install)
         step_system_profiles(install)
         step_user_dirs()
-        machine_preset = step_machine_preset(cfg)
+        firmware_backend = step_firmware(cfg)
+        machine_preset, machine_fingerprint = step_machine_preset(
+            cfg, firmware_backend)
+        if not machine_preset:
+            return 1
         step_write_access()
         step_data_dir()
 
         cfg.update({
             "orca_install_dir": install,
-            "orca_version": version,
+            # Keep the v1.0 field meaningful for older builds that may read
+            # this config, while new builds store both versions explicitly.
+            "orca_version": bundle_version,
+            "orca_app_version": app_version,
+            "profile_bundle_version": bundle_version,
+            "firmware_backend": firmware_backend,
             "machine_preset": machine_preset,
+            "machine_fingerprint": machine_fingerprint,
             "nozzle": orca.SUPPORTED_NOZZLE,
         })
 

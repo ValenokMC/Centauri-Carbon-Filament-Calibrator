@@ -12,13 +12,24 @@ import re
 import pytest
 
 from centauri_calibrator import (config as config_mod, geometry, journal, names,
-                                 orca, paths, plates, presets, scales, session,
-                                 templates)
+                                 orca, paths, plates, presets, run_context,
+                                 scales, session, templates)
 
 
 def digest(path):
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()
+
+
+def test_legacy_config_version_remains_profile_bundle(tmp_path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps({"orca_version": "02.04.00.06"}),
+                           encoding="utf-8")
+
+    loaded = config_mod.load(str(config_path))
+
+    assert loaded["profile_bundle_version"] == "02.04.00.06"
+    assert loaded["orca_app_version"] == ""
 
 
 # ------------------------------------------------------------ name safety
@@ -263,7 +274,7 @@ def test_first_preset_write_asks_even_when_internal_call_says_no_repeat(
     target_dir = tmp_path / "orca" / "filament"
     monkeypatch.setattr(orca, "filament_dirs", lambda: [str(target_dir)])
     monkeypatch.setattr(orca, "is_running", lambda: False)
-    monkeypatch.setattr(orca, "compatible_printers", lambda nozzle: ["Centauri"])
+    monkeypatch.setattr(orca, "compatible_printers", lambda **kwargs: ["Centauri"])
     monkeypatch.setattr(presets, "preset_version", lambda directories: "2.4.2")
     monkeypatch.setattr(session.support, "maybe_show", lambda **kwargs: False)
 
@@ -320,6 +331,97 @@ def test_dry_run_creates_no_spool_folder(isolated_data_dir):
     run.spool = "Demo PLA"
     run.load_run()
     assert not isolated_data_dir.exists()
+
+
+def _context_config(backend="stock", fingerprint="profile-a", nozzle="0.4"):
+    return {
+        "firmware_backend": backend,
+        "nozzle": nozzle,
+        "machine_preset": "Centauri %s" % backend,
+        "machine_fingerprint": fingerprint,
+        "orca_app_version": "2.4.2",
+        "profile_bundle_version": "02.04.00.06",
+    }
+
+
+def test_legacy_measurements_resume_only_in_stock_04_context(isolated_data_dir):
+    old = os.path.join(paths.spools_dir(), "2026-08-18 Demo PLA")
+    os.makedirs(old)
+    measurement_path = os.path.join(old, "measurements.json")
+    with open(measurement_path, "w", encoding="utf-8") as f:
+        json.dump({"flow": 0.02}, f)
+
+    run = session.Session(_context_config(), {}, dry_run=False)
+    run.spool = "Demo PLA"
+    assert run.load_run() == old
+    assert run.measurements == {"flow": 0.02}
+    run.save_measurements()
+
+    saved = json.load(open(measurement_path, encoding="utf-8"))
+    assert saved["schema"] == run_context.SCHEMA
+    assert saved["context"]["firmware_backend"] == "stock"
+    assert saved["measurements"] == {"flow": 0.02}
+
+
+def test_cosmos_never_reuses_context_free_stock_measurements(isolated_data_dir):
+    old = os.path.join(paths.spools_dir(), "2026-08-18 Demo PLA")
+    os.makedirs(old)
+    old_path = os.path.join(old, "measurements.json")
+    with open(old_path, "w", encoding="utf-8") as f:
+        json.dump({"flow": 0.02}, f)
+
+    run = session.Session(_context_config("cosmos"), {}, dry_run=False)
+    run.spool = "Demo PLA"
+    new_folder = run.load_run()
+
+    assert new_folder != old
+    assert "[cosmos-0.4-" in os.path.basename(new_folder)
+    assert run.measurements == {}
+    assert run.context_changed_from == 1
+    assert json.load(open(old_path, encoding="utf-8")) == {"flow": 0.02}
+
+
+def test_profile_fingerprint_change_starts_a_new_run(isolated_data_dir):
+    first = session.Session(_context_config("cosmos", "profile-a"), {}, dry_run=False)
+    first.spool = "Demo PLA"
+    first.load_run()
+    first.measurements = {"temperature": 215}
+    first.save_measurements()
+
+    second = session.Session(_context_config("cosmos", "profile-b"), {}, dry_run=False)
+    second.spool = "Demo PLA"
+    second.load_run()
+    assert second.folder != first.folder
+    assert second.measurements == {}
+    assert second.context_changed_from == 1
+
+
+def test_unknown_measurement_schema_is_not_treated_as_legacy(isolated_data_dir):
+    old = os.path.join(paths.spools_dir(), "2026-08-18 Demo PLA")
+    os.makedirs(old)
+    old_path = os.path.join(old, "measurements.json")
+    payload = {"schema": 999, "context": _context_config(),
+               "measurements": {"temperature": 215}}
+    with open(old_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f)
+
+    run = session.Session(_context_config(), {}, dry_run=False)
+    run.spool = "Demo PLA"
+    run.load_run()
+
+    assert run.folder != old
+    assert run.measurements == {}
+    assert json.load(open(old_path, encoding="utf-8")) == payload
+
+
+def test_cosmos_preset_name_is_namespaced_by_exact_profile():
+    stock = run_context.from_config(_context_config("stock", "profile-a"))
+    cosmos_a = run_context.from_config(_context_config("cosmos", "profile-a"))
+    cosmos_b = run_context.from_config(_context_config("cosmos", "profile-b"))
+    assert run_context.preset_name("Demo PLA", stock) == "Demo PLA"
+    assert "COSMOS 0.4" in run_context.preset_name("Demo PLA", cosmos_a)
+    assert (run_context.preset_name("Demo PLA", cosmos_a) !=
+            run_context.preset_name("Demo PLA", cosmos_b))
 
 
 def test_saved_wizard_project_is_never_reopened(sample_template, tmp_path,
@@ -436,6 +538,52 @@ def test_journal_lists_previous_spools_newest_first(tmp_path):
                                      when=datetime.date(2026, 2, 1)), path=path)
     previous = journal.previous_spools(path)
     assert [spool for _, spool, _ in previous] == ["Second", "First"]
+
+
+def test_journal_keeps_same_spool_in_different_printer_contexts(tmp_path):
+    path = str(tmp_path / "Journal.csv")
+    stock = run_context.from_config(_context_config("stock", "stock-profile"))
+    cosmos = run_context.from_config(_context_config("cosmos", "cosmos-profile"))
+    journal.record(journal.build_row(
+        "PLA", "Demo PLA", "Base", {"nozzle_temperature": 210},
+        context=stock, run_id="stock-run"), path=path)
+    journal.record(journal.build_row(
+        "PLA", "Demo PLA", "Base", {"nozzle_temperature": 220},
+        context=cosmos, run_id="cosmos-run"), path=path)
+
+    rows = open(path, encoding="utf-8-sig").read().strip().splitlines()
+    assert len(rows) == 3
+    assert "stock-profile" in rows[1]
+    assert "cosmos-profile" in rows[2]
+
+
+def test_legacy_journal_is_upgraded_without_losing_rows(tmp_path):
+    path = tmp_path / "Journal.csv"
+    legacy_row = ["2026-01-15", "PLA", "Demo PLA", "Base", "210",
+                  "", "", "", "", "", "old note"]
+    path.write_text(";".join(journal.LEGACY_HEADER) + "\n" +
+                    ";".join(legacy_row) + "\n", encoding="utf-8-sig")
+
+    journal.record(journal.build_row(
+        "PLA", "Demo PLA", "Base", {"nozzle_temperature": 215},
+        run_id="new-run"), path=str(path))
+
+    rows = journal._read_rows(str(path))
+    assert rows[0] == journal.HEADER
+    assert rows[1][:len(legacy_row)] == legacy_row
+    assert rows[2][journal.HEADER.index("run_id")] == "new-run"
+
+
+def test_unknown_journal_header_is_never_replaced(tmp_path):
+    path = tmp_path / "Journal.csv"
+    original = "private;custom;columns\nkeep;this;row\n"
+    path.write_text(original, encoding="utf-8-sig")
+
+    with pytest.raises(ValueError, match="refusing"):
+        journal.record(journal.build_row("PLA", "Demo", "Base", {}),
+                       path=str(path))
+
+    assert path.read_text(encoding="utf-8-sig") == original
 
 
 def test_example_journal_holds_only_invented_values():

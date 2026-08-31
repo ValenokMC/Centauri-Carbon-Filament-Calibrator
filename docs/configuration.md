@@ -14,13 +14,22 @@ preset backups.
 | Key | What it is |
 |---|---|
 | `orca_install_dir` | Where OrcaSlicer is installed |
-| `orca_version` | The Elegoo profile bundle version found there |
-| `machine_preset` | The printer preset you calibrate on |
+| `orca_version` | Legacy copy of the Elegoo profile bundle version, kept for v1.0 compatibility |
+| `orca_app_version` | The installed OrcaSlicer application version |
+| `profile_bundle_version` | The Elegoo profile bundle version |
+| `firmware_backend` | `stock` for Elegoo/SDCP or `cosmos` for OpenCentauri/COSMOS/Moonraker |
+| `machine_preset` | The exact printer preset you calibrate on |
+| `machine_fingerprint` | Stable identity of that preset; network addresses and API keys are excluded |
 | `print_host` | Legacy field from pre-release builds. Ignored by the live-wizard workflow. |
 | `nozzle` | `"0.4"`. Nothing else is tested. |
 | `write_to_orca` | Legacy compatibility field. It never grants permission; every new calibration run asks before its first preset write. |
 
 `Doctor.cmd` prints all of it, in a readable form, without changing anything.
+
+Changing firmware, nozzle or printer preset creates a separate calibration run
+and a separate COSMOS filament-preset name. Measurements made with the stock
+firmware are never silently resumed under COSMOS. Re-run `Setup.cmd` after any
+of those changes.
 
 ---
 

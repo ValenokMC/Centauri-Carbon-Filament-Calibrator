@@ -31,7 +31,7 @@
 |---|---|
 | **Operating system** | Windows 10 or 11 |
 | **Python** | 3.9 or newer — [python.org](https://www.python.org/downloads/), tick *Add python.exe to PATH* |
-| **Slicer** | OrcaSlicer 2.4.2, with the Elegoo profiles installed |
+| **Slicer** | OrcaSlicer 2.4.2, with the profile for the active firmware installed |
 | **Printer** | Elegoo Centauri Carbon, **0.4 mm nozzle** |
 | **Tools** | A caliper. That is the only hardware you need beyond the printer. |
 
@@ -81,8 +81,9 @@ This does the bookkeeping.
 ## Quick Start
 
 1. **Download and unpack** the [Windows ZIP](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/latest).
-2. **Run `Setup.cmd`.** It finds OrcaSlicer, your profiles, your printer preset,
-   and the folders where Orca reads user presets.
+2. **Run `Setup.cmd`.** It finds OrcaSlicer, asks whether the printer uses stock
+   firmware or COSMOS, selects that firmware's exact printer preset, and finds
+   the folders where Orca reads user presets.
 3. **Run `Калибровать.cmd`** (or `Run.cmd`). Choose a material and name the spool.
 4. **Follow the screen.** For five tests it gives the exact values to enter in
    Orca's live Calibration wizard. The included 100 mm shrinkage bar opens
@@ -117,6 +118,8 @@ each with its own base profile and drying recommendation.
 | **OrcaSlicer 2.4.2** | ✅ Tested |
 | Other OrcaSlicer versions | ⚠️ Not tested — profile paths and key names move between versions |
 | Elegoo Centauri Carbon, **0.4 mm nozzle** | ✅ Tested |
+| Stock Elegoo firmware / SDCP | ✅ Tested |
+| OpenCentauri / COSMOS / Moonraker | ⚠️ Context and preset isolation tested; end-to-end printer validation pending |
 | Other nozzle sizes | ❌ The plates are built for 0.4; a 0.2 would print something meaningless |
 | Centauri Carbon 2, other printers | ❌ Not supported, not tested |
 | macOS, Linux | ❌ Not supported — Windows paths and launchers throughout |
@@ -145,6 +148,9 @@ does, so:
   proves it.
 - **`Dry-Run.cmd` writes nothing at all** — walk the whole dialog and see what
   would happen.
+- **Firmware contexts stay separate.** Stock measurements cannot be resumed
+  under COSMOS. COSMOS presets use their own names and attach only to the exact
+  selected COSMOS machine preset.
 
 **OrcaSlicer is never force-killed.** It is asked to close, politely, and if it
 is sitting on an unsaved-project dialog the calibrator stops and asks you to deal

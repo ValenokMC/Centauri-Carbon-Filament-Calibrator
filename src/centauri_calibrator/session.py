@@ -13,12 +13,14 @@ the final PA.
 """
 import json
 import os
+import uuid
 
 from . import config as config_mod
 from . import console as c
 from . import formulas, journal, names, orca, paths, presets, scales
 from . import templates as templates_mod
 from . import support
+from . import run_context
 
 
 class Session(object):
@@ -35,6 +37,9 @@ class Session(object):
         self.folder = None
         self.base_values = {}
         self.profiles = {}
+        self.context = run_context.from_config(cfg)
+        self.run_id = None
+        self.context_changed_from = 0
         # Permission to write into Orca is deliberately process-local.  Never
         # trust a value carried by an old or hand-edited config.json.
         self.orca_write_approved = False
@@ -73,21 +78,54 @@ class Session(object):
     def load_run(self):
         """Continue a run already started, or begin one for today."""
         root = paths.spools_dir(create=not self.dry_run)
-        existing = sorted(d for d in os.listdir(root)
-                          if os.path.isdir(os.path.join(root, d))
-                          and d.endswith(" " + self.spool)) if os.path.isdir(root) else []
-        folder_name = existing[-1] if existing else names.spool_folder_name(self.spool)
+        existing = sorted((d for d in os.listdir(root)
+                           if os.path.isdir(os.path.join(root, d))
+                           and (d.endswith(" " + self.spool)
+                                or (" " + self.spool + " [") in d)),
+                          reverse=True) if os.path.isdir(root) else []
+        selected = None
+        loaded_measurements = {}
+        loaded_run_id = None
+        incompatible = 0
+        for folder_name in existing:
+            candidate = os.path.join(root, folder_name)
+            path = os.path.join(candidate, "measurements.json")
+            if not os.path.exists(path):
+                continue
+            try:
+                with open(path, encoding="utf-8") as f:
+                    payload = json.load(f)
+            except (OSError, ValueError):
+                continue
+            if (isinstance(payload, dict)
+                    and payload.get("schema") == run_context.SCHEMA
+                    and isinstance(payload.get("measurements"), dict)):
+                saved_context = payload.get("context") or {}
+                if not run_context.matches(saved_context, self.context):
+                    incompatible += 1
+                    continue
+                loaded_measurements = payload.get("measurements") or {}
+                loaded_run_id = payload.get("run_id") or None
+            elif (isinstance(payload, dict)
+                  and not any(key in payload for key in
+                              ("schema", "context", "measurements", "run_id"))
+                  and run_context.legacy_is_compatible(self.context)):
+                loaded_measurements = payload
+            else:
+                incompatible += 1
+                continue
+            selected = folder_name
+            break
+
+        folder_name = selected or (
+            names.spool_folder_name(self.spool) + " " +
+            run_context.folder_suffix(self.context))
         self.folder = names.safe_join(root, folder_name)
         if not self.dry_run:
             os.makedirs(self.folder, exist_ok=True)
-
-        path = os.path.join(self.folder, "measurements.json")
-        if os.path.exists(path):
-            try:
-                with open(path, encoding="utf-8") as f:
-                    self.measurements = json.load(f)
-            except (OSError, ValueError):
-                self.measurements = {}
+        self.measurements = loaded_measurements
+        self.run_id = loaded_run_id or uuid.uuid4().hex
+        self.context_changed_from = incompatible
         return self.folder
 
     def save_measurements(self):
@@ -96,7 +134,12 @@ class Session(object):
         path = os.path.join(self.folder, "measurements.json")
         tmp = path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self.measurements, f, ensure_ascii=False, indent=2)
+            json.dump({
+                "schema": run_context.SCHEMA,
+                "run_id": self.run_id,
+                "context": self.context,
+                "measurements": self.measurements,
+            }, f, ensure_ascii=False, indent=2, sort_keys=True)
         os.replace(tmp, path)
 
     # ------------------------------------------------------------ plates
@@ -198,7 +241,8 @@ class Session(object):
     # ------------------------------------------------------------ preset
 
     def preset_targets(self):
-        return [os.path.join(d, self.spool + ".json")
+        preset_name = run_context.preset_name(self.spool, self.context)
+        return [os.path.join(d, preset_name + ".json")
                 for d in orca.filament_dirs()]
 
     def save_preset(self, fields, ask=True):
@@ -245,9 +289,18 @@ class Session(object):
                     if not c.ask_yes("Продолжить запись?", default=False):
                         return None
 
+        preset_name = run_context.preset_name(self.spool, self.context)
+        compatible = orca.compatible_printers(
+            nozzle=self.context.get("nozzle", "0.4"),
+            machine_preset=self.context.get("machine_preset") or None,
+            backend=self.context.get("firmware_backend") or None)
+        if not compatible:
+            c.bad("Выбранный профиль принтера больше не найден в OrcaSlicer.")
+            c.dim("Пресет не записан. Снова запусти Setup.cmd и выбери профиль.")
+            return None
         preset = presets.build(
-            self.spool, self.base, fields,
-            compatible_printers=orca.compatible_printers(nozzle=self.cfg.get("nozzle", "0.4")),
+            preset_name, self.base, fields,
+            compatible_printers=compatible,
             vendor=names.vendor_of(self.spool, self.scales.get("vendors", [])),
             version=presets.preset_version(orca.filament_dirs()))
 
@@ -265,7 +318,9 @@ class Session(object):
 
         self.orca_write_approved = True
 
-        journal.record(journal.build_row(self.material, self.spool, self.base, fields))
+        journal.record(journal.build_row(
+            self.material, self.spool, self.base, fields,
+            context=self.context, run_id=self.run_id))
         c.dim("строка ушла в %s" % paths.journal_path())
 
         # The only unprompted place the support note may appear: right after a
@@ -308,6 +363,10 @@ class Session(object):
             c.warn("СУХОЙ ПРОГОН — ничего не записывается.")
         if self.measurements:
             c.dim("Найден начатый прогон: %s" % os.path.basename(self.folder))
+        elif self.context_changed_from:
+            c.warn("Прежний прогон этой катушки относится к другой прошивке, "
+                   "соплу или профилю.")
+            c.dim("Он сохранён без изменений; для текущего контекста начат новый.")
 
         try:
             return self._loop()

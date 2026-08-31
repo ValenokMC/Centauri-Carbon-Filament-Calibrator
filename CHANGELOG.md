@@ -7,7 +7,28 @@ this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Separate stock Elegoo/SDCP and OpenCentauri/COSMOS/Moonraker setup contexts.
+- Versioned measurement files and journal columns that record firmware, nozzle,
+  exact machine preset, profile fingerprint and Orca/profile-bundle versions.
+- Read-only diagnostics for the application version, profile bundle and every
+  discovered machine context.
+
+### Changed
+
+- Setup now reads the OrcaSlicer application version separately from the Elegoo
+  profile bundle version and requires an exact 0.4 mm COSMOS profile when that
+  backend is selected.
+- COSMOS filament presets are namespaced by backend/nozzle/profile and are
+  compatible only with the selected COSMOS printer preset.
+- A firmware, nozzle or machine-profile change starts a separate calibration
+  run. Legacy context-free measurements remain valid only for stock 0.4 mm.
+
+### Fixed
+
+- Print-host discovery no longer picks an arbitrary profile when several
+  equally plausible Centauri presets exist.
 
 ## [1.0.0] — 2026-08-23
 

@@ -9,9 +9,13 @@ from . import paths
 
 DEFAULTS = {
     "orca_install_dir": "",
-    "orca_version": "",
+    "orca_version": "",           # legacy: Elegoo profile bundle version
+    "orca_app_version": "",
+    "profile_bundle_version": "",
     "appdata_root": "",           # empty means "use %APPDATA%"
     "machine_preset": "",         # the user's Centauri Carbon preset name
+    "machine_fingerprint": "",
+    "firmware_backend": "stock",  # stock SDCP, or COSMOS/Moonraker
     "print_host": "",             # legacy; live-wizard workflow ignores it
     "nozzle": "0.4",
     # Retained for compatibility with early config files.  Permission is now
@@ -37,6 +41,12 @@ def load(path=None):
         raise ConfigError("%s не содержит настроек." % p)
     merged = dict(DEFAULTS)
     merged.update(data)
+    # v1.0 stored the Elegoo profile bundle in ``orca_version``.  Preserve
+    # that meaning when loading an old config; treating it as the application
+    # version would make a value such as 02.04.00.06 look like Orca itself.
+    if (not merged.get("profile_bundle_version")
+            and merged.get("orca_version")):
+        merged["profile_bundle_version"] = merged["orca_version"]
     merged["write_to_orca"] = False
     return merged
 
@@ -69,7 +79,9 @@ def summary(cfg):
     """Lines for a human."""
     return [
         "OrcaSlicer      : %s" % (cfg.get("orca_install_dir") or "(не найден)"),
-        "Версия Orca     : %s" % (cfg.get("orca_version") or "неизвестна"),
+        "Версия Orca     : %s" % (cfg.get("orca_app_version") or "неизвестна"),
+        "Пакет Elegoo    : %s" % (cfg.get("profile_bundle_version") or "неизвестен"),
+        "Прошивка        : %s" % cfg.get("firmware_backend", "stock"),
         "Профиль принтера: %s" % (cfg.get("machine_preset") or "(не выбран)"),
         "Сопло           : %s мм" % cfg.get("nozzle", "0.4"),
         "Запись в Orca   : только после подтверждения в каждом запуске",

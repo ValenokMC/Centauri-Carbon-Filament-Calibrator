@@ -12,6 +12,7 @@ For someone about to change the code.
               ├── templates.py ─► geometry.py (project-owned shrinkage model)
               ├── plates.py                  (legacy 3MF safety helpers)
               ├── journal.py                 (write: Journal.csv)
+              ├── run_context.py             (pure: firmware/profile identity)
               ├── presets.py                 (write: the preset, atomically)
               ├── names.py                   (pure)
               └── support.py                 (pure + one small state file)
@@ -36,6 +37,7 @@ takes the default, and the default is always shown.
 | `geometry.py` | Building the project-owned shrinkage 3MF from vertices | generated models |
 | `templates.py` | Route the shrinkage model; reject saved Orca wizard projects | no in the normal workflow |
 | `journal.py` | `Journal.csv` | the journal |
+| `run_context.py` | Firmware, nozzle and machine-profile identity; safe run and preset names | no |
 | `support.py` | Links, the 30-day rule | `support.json` |
 | `session.py` | The calibration dialog | via the above |
 | `wizard.py` | First run | `config.json` |
@@ -92,6 +94,19 @@ saved wizard projects never open, while shipped shrinkage geometry does.
 personalisation primitives. They are useful for archive safety tests and
 backward compatibility, but they are not part of the public calibration flow.
 See [templates.md](templates.md) and `THIRD_PARTY_NOTICES.md`.
+
+## Run identity
+
+Before a run reaches preset writing, `run_context.py` binds it to the selected
+firmware backend, nozzle and machine-profile fingerprint. `measurements.json`
+uses a versioned envelope containing that context and a run ID. A mismatch
+starts a new context-suffixed folder instead of reusing measurements. The same
+context and run ID are written into `Journal.csv`; its legacy header is upgraded
+when the next row is saved.
+
+COSMOS preset names are namespaced by backend, nozzle and fingerprint, and
+their compatibility list contains only the exact selected machine preset.
+Network and credential fields do not participate in the fingerprint.
 
 ## Writing the preset
 

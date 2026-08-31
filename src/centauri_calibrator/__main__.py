@@ -54,8 +54,10 @@ def cmd_doctor():
     report = orca.survey()
     if report["install_dir"]:
         c.ok("установлена: %s" % report["install_dir"])
-        c.say("     версия профилей: %s (проект проверен на %s)"
+        c.say("     версия приложения: %s (проект проверен на %s)"
               % (report["version"] or "неизвестна", report["tested_version"]))
+        c.say("     пакет Elegoo: %s" %
+              (report.get("profile_bundle_version") or "неизвестен"))
         c.say("     системных профилей филамента: %d" % report["system_profiles"])
     else:
         c.bad("не найдена")
@@ -66,8 +68,13 @@ def cmd_doctor():
 
     c.head("Пресеты принтера")
     if report["machine_presets"]:
+        contexts = {item.get("machine_preset"): item
+                    for item in report.get("machine_contexts", [])}
         for name in report["machine_presets"]:
-            c.ok(name)
+            item = contexts.get(name, {})
+            c.ok("%s · %s · %s мм" % (
+                name, item.get("firmware_backend", "unknown"),
+                item.get("nozzle", "?")))
     else:
         c.warn("своих пресетов нет — будет использован системный")
     c.head("Данные")

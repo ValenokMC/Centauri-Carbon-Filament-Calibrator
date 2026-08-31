@@ -12,8 +12,12 @@ import tempfile
 from . import formulas, paths
 
 
-HEADER = ["date", "material", "spool", "base", "temperature", "flow",
-          "pressure_advance", "max_flow", "retraction", "shrinkage", "note"]
+LEGACY_HEADER = ["date", "material", "spool", "base", "temperature", "flow",
+                 "pressure_advance", "max_flow", "retraction", "shrinkage", "note"]
+CONTEXT_COLUMNS = ["run_id", "firmware_backend", "nozzle", "machine_preset",
+                   "machine_fingerprint", "orca_app_version",
+                   "profile_bundle_version"]
+HEADER = LEGACY_HEADER + CONTEXT_COLUMNS
 
 # The preset fields that go into the columns, in column order.
 FIELD_ORDER = ("nozzle_temperature", "filament_flow_ratio", "pressure_advance",
@@ -39,36 +43,77 @@ def _read_rows(path):
 def previous_spools(path=None):
     """Spools calibrated before, newest first: [(material, spool, date), ...]."""
     rows = _read_rows(path or paths.journal_path(create=False))
+    if not rows:
+        return []
+    header = rows[0]
+    try:
+        date_i, material_i, spool_i = (
+            header.index("date"), header.index("material"), header.index("spool"))
+    except ValueError:
+        return []
     seen, out = set(), []
     for row in reversed(rows[1:]):
-        if len(row) >= 3 and (row[1], row[2]) not in seen:
-            seen.add((row[1], row[2]))
-            out.append((row[1], row[2], row[0]))
+        if len(row) > max(date_i, material_i, spool_i):
+            pair = (row[material_i], row[spool_i])
+            if pair in seen:
+                continue
+            seen.add(pair)
+            out.append((pair[0], pair[1], row[date_i]))
     return out
 
 
-def build_row(material, spool, base, fields, when=None, note=""):
+def build_row(material, spool, base, fields, when=None, note="", context=None,
+              run_id=""):
     day = (when or datetime.date.today()).isoformat()
-    return [day, material, spool, base] + [
+    row = [day, material, spool, base] + [
         formulas.format_field(k, fields[k]) if k in fields else ""
         for k in FIELD_ORDER] + [note]
+    context = context or {}
+    row += [str(run_id or "")]
+    row += [str(context.get(key) or "") for key in CONTEXT_COLUMNS[1:]]
+    return row
+
+
+def _upgrade_rows(rows):
+    if not rows:
+        return [HEADER]
+    old_header = rows[0]
+    if old_header == HEADER:
+        return rows
+    if old_header != LEGACY_HEADER:
+        raise ValueError("unknown Journal.csv header; refusing to replace it")
+    upgraded = [HEADER]
+    for old in rows[1:]:
+        values = {name: old[index] for index, name in enumerate(old_header)
+                  if index < len(old)}
+        upgraded.append([values.get(name, "") for name in HEADER])
+    return upgraded
+
+
+def _row_key(row):
+    run_id = row[HEADER.index("run_id")] if len(row) > HEADER.index("run_id") else ""
+    if run_id:
+        return ("run", run_id)
+    return ("legacy", row[HEADER.index("date")], row[HEADER.index("spool")],
+            row[HEADER.index("base")])
 
 
 def record(row, path=None):
     """Update this run's row rather than appending a new one.
 
     The preset is rebuilt after every single measurement, so plain appending
-    would grow the journal by six rows per spool instead of one. The row key is
-    date plus spool name: one run, one row.
+    would grow the journal by six rows per spool instead of one. New rows use a
+    stable run id; legacy rows use date, spool and base. One run, one row.
     """
     p = path or paths.journal_path()
-    rows = _read_rows(p)
-    if not rows or rows[0] != HEADER:
-        rows = [HEADER] + rows
+    rows = _upgrade_rows(_read_rows(p))
 
-    key = (row[0], row[2])
+    if len(row) != len(HEADER):
+        raise ValueError("journal row has %d columns, expected %d" %
+                         (len(row), len(HEADER)))
+    key = _row_key(row)
     for index, existing in enumerate(rows[1:], start=1):
-        if len(existing) > 2 and (existing[0], existing[2]) == key:
+        if len(existing) == len(HEADER) and _row_key(existing) == key:
             rows[index] = row
             break
     else:

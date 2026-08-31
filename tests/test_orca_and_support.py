@@ -4,7 +4,7 @@ import json
 import os
 
 from centauri_calibrator import __main__ as cli
-from centauri_calibrator import orca, support
+from centauri_calibrator import orca, support, wizard
 
 
 # ------------------------------------------------------------- discovery
@@ -25,6 +25,20 @@ def test_version_is_read_from_the_vendor_bundle(fake_orca):
 def test_unknown_version_is_reported_as_none(tmp_path):
     (tmp_path / "resources" / "profiles").mkdir(parents=True)
     assert orca.installed_version(str(tmp_path)) is None
+
+
+def test_application_and_profile_bundle_versions_are_separate(fake_orca):
+    assert orca.application_version(
+        fake_orca["install"],
+        registry_entries=[("OrcaSlicer", "2.4.2")]) == "2.4.2"
+    assert orca.profile_bundle_version(fake_orca["install"]) == "2.4.2.0"
+
+
+def test_setup_refuses_cosmos_without_matching_machine_profile(monkeypatch):
+    monkeypatch.setattr(orca, "centauri_machine_presets",
+                        lambda **kwargs: ("Elegoo Centauri Carbon 0.4 nozzle", []))
+
+    assert wizard.step_machine_preset({}, orca.BACKEND_COSMOS) == (None, "")
 
 
 def test_both_account_directories_are_found(fake_orca):
@@ -115,6 +129,65 @@ def test_manual_colour_change_preset_is_avoided(fake_orca, tmp_path):
                    "manual_filament_change": "1"}, f)
     found = orca.find_print_host(fake_orca["appdata"])
     assert found["print_host"] == "10.0.0.42"
+
+
+def _add_cosmos_preset(fake_orca, name="Centauri COSMOS 0.4"):
+    machine = os.path.join(fake_orca["user_root"], "884400112233", "machine")
+    path = os.path.join(machine, name + ".json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({
+            "name": name,
+            "inherits": "Elegoo Centauri Carbon 0.4 nozzle",
+            "printer_settings_id": name,
+            "print_host": "10.0.0.88",
+            "host_type": "moonraker",
+            "machine_start_gcode": "PRINT_START",
+        }, f)
+    return path
+
+
+def test_cosmos_and_stock_machine_presets_are_separate_contexts(fake_orca):
+    _add_cosmos_preset(fake_orca)
+    _, cosmos = orca.centauri_machine_presets(
+        fake_orca["appdata"], backend=orca.BACKEND_COSMOS)
+    _, stock = orca.centauri_machine_presets(
+        fake_orca["appdata"], backend=orca.BACKEND_STOCK)
+    assert [node["name"] for _, node in cosmos] == ["Centauri COSMOS 0.4"]
+    assert "Centauri COSMOS 0.4" not in [node["name"] for _, node in stock]
+    assert "My Centauri" in [node["name"] for _, node in stock]
+
+
+def test_cosmos_filament_compatibility_is_only_the_selected_profile(fake_orca):
+    _add_cosmos_preset(fake_orca)
+    compatible = orca.compatible_printers(
+        fake_orca["appdata"], machine_preset="Centauri COSMOS 0.4",
+        backend=orca.BACKEND_COSMOS)
+    assert compatible == ["Centauri COSMOS 0.4"]
+    assert "Elegoo Centauri Carbon 0.4 nozzle" not in compatible
+    assert "My Centauri" not in compatible
+
+
+def test_print_host_is_taken_from_exact_selected_cosmos_profile(fake_orca):
+    _add_cosmos_preset(fake_orca)
+    found = orca.find_print_host(
+        fake_orca["appdata"], machine_preset="Centauri COSMOS 0.4",
+        backend=orca.BACKEND_COSMOS)
+    assert found["print_host"] == "10.0.0.88"
+    assert found["host_type"] == "moonraker"
+    assert orca.find_print_host(
+        fake_orca["appdata"], machine_preset="missing",
+        backend=orca.BACKEND_COSMOS) == {}
+
+
+def test_machine_fingerprint_ignores_address_but_not_print_semantics():
+    original = {"name": "COSMOS", "print_host": "10.0.0.1",
+                "machine_start_gcode": "PRINT_START"}
+    moved = dict(original, print_host="10.0.0.2")
+    changed = dict(original, machine_start_gcode="OTHER_START")
+    assert (orca.machine_profile_fingerprint(original) ==
+            orca.machine_profile_fingerprint(moved))
+    assert (orca.machine_profile_fingerprint(original) !=
+            orca.machine_profile_fingerprint(changed))
 
 
 def test_compatible_printers_include_the_system_and_the_user_preset(fake_orca):
