@@ -62,7 +62,10 @@ def compute(test, measurement, base_values):
     elif kind == "offset":
         base_flow = float(base_values.get("filament_flow_ratio") or 1.0)
         value = formulas.flow_by_offset(base_flow, measurement)
-        why = "{} + {:g}".format(base_flow, measurement)
+        offsets = (measurement if isinstance(measurement, (list, tuple))
+                   else [measurement])
+        why = " + ".join(["{:g}".format(base_flow)]
+                         + ["{:g}".format(float(item)) for item in offsets])
 
     elif kind == "wall_width":
         base_flow = float(base_values.get("filament_flow_ratio") or 1.0)

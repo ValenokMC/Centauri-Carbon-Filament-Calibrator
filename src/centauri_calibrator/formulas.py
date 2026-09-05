@@ -47,8 +47,16 @@ def flow_by_offset(base_flow, offset):
     base, so the totals simply add. The method is visual - you pick the tile
     with the flattest top surface - and it is steadier than measuring a thin
     wall with a caliper, where jaw pressure alone can shift the answer by 5%.
+
+    The offset arrives as a list, because a repeat run is printed with the
+    corrected ratio already in place: its tiles are labelled relative to that,
+    not to the base. So 0.98 + 0.02 + 0 is 1.000, not 0.98 - an honest zero on
+    the second plate means "this one is right", and adding it to the base
+    instead would quietly undo the first run. A bare number is still accepted;
+    that is how runs recorded before this change are stored.
     """
-    value = base_flow + offset
+    offsets = list(offset) if isinstance(offset, (list, tuple)) else [offset]
+    value = base_flow + sum(float(item) for item in offsets)
     if not 0.7 <= value <= 1.3:
         raise MeasurementOutOfRange(
             "flow came out at {:.3f}, which is far outside anything sensible. "
