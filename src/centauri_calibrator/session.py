@@ -40,6 +40,10 @@ class Session(object):
         self.context = run_context.from_config(cfg)
         self.run_id = None
         self.context_changed_from = 0
+        # Values pinned by hand in the slicer. Not measurements - they have no
+        # raw number behind them - so they live beside the journal rather than
+        # in it, and they are laid over the computed fields on the way out.
+        self.manual = {}
         # Permission to write into Orca is deliberately process-local.  Never
         # trust a value carried by an old or hand-edited config.json.
         self.orca_write_approved = False
@@ -142,17 +146,116 @@ class Session(object):
             }, f, ensure_ascii=False, indent=2, sort_keys=True)
         os.replace(tmp, path)
 
+    # ---------------------------------------------------------- pinned by hand
+
+    def manual_path(self):
+        return os.path.join(self.folder, "manual.json")
+
+    def load_manual(self):
+        self.manual = {}
+        path = self.manual_path()
+        if os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict):
+                    self.manual = {str(k): str(v) for k, v in loaded.items()}
+            except (OSError, ValueError):
+                self.manual = {}
+
+    def save_manual(self):
+        if self.dry_run:
+            return
+        path = self.manual_path()
+        if not self.manual:
+            if os.path.exists(path):
+                os.remove(path)
+            return
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(self.manual, f, ensure_ascii=False, indent=2, sort_keys=True)
+        os.replace(tmp, path)
+
+    def with_manual(self, fields):
+        """Computed fields with anything pinned by hand laid over the top."""
+        merged = dict(fields or {})
+        merged.update(self.manual)
+        return merged
+
+    def owned_fields(self):
+        owned = set()
+        for test in self.tests:
+            owned.update(test.get("fields") or ())
+        if "nozzle_temperature" in owned:
+            owned.add("nozzle_temperature_initial_layer")
+        return owned
+
+    def reconcile_with_slicer(self, fields):
+        """Show where the preset disagrees with the journal and settle it.
+
+        Orca keeps presets in memory and writes them out when it closes, so a
+        change made in an open slicer is not on disk yet. Nothing can be done
+        about that from here beyond saying so when it bites.
+        """
+        try:
+            targets = self.preset_targets()
+        except Exception:
+            # No spool name yet, or nothing usable to build a path from. There
+            # is simply no preset to compare against, which is not an error.
+            return False
+        current = presets.read_current(targets, self.owned_fields())
+        gaps = presets.differences(self.with_manual(fields), current)
+        if not gaps:
+            return False
+        c.say("")
+        c.head("Пресет в слайсере разошёлся с расчётом")
+        c.dim("  Похоже, эти поля правились руками в Orca. Калибратор "
+              "пересобирает пресет целиком,")
+        c.dim("  поэтому без ответа он их перезапишет.")
+        changed = False
+        for field, (in_slicer, ours) in sorted(gaps.items()):
+            c.say("")
+            c.say("  %-34s в слайсере %s · расчёт %s" % (field, in_slicer, ours))
+            if c.ask_yes("  Оставить значение из слайсера?", default=True):
+                self.manual[field] = in_slicer
+                c.ok("  закреплено вручную: %s" % in_slicer)
+            else:
+                self.manual.pop(field, None)
+                c.dim("  вернём расчётное: %s" % ours)
+            changed = True
+        return changed
+
+    def release_manual(self, test):
+        """A fresh measurement releases a pin: that is what it was taken for."""
+        for field in test.get("fields") or ():
+            if field not in self.manual:
+                continue
+            c.warn("  Поле %s закреплено вручную: %s. Только что его измерили."
+                   % (field, self.manual[field]))
+            if c.ask_yes("  Снять закрепление и взять замер?", default=True):
+                self.manual.pop(field, None)
+                self.save_manual()
+            else:
+                c.dim("  оставили ручное — замер записан, но в пресет не пойдёт")
+
     # ------------------------------------------------------------ plates
 
     def plate_menu(self, computed_by_test):
         items = []
         for test in self.tests:
             key = test["key"]
+            shown = computed_by_test.get(key)
+            pinned = any(f in self.manual for f in test.get("fields") or ())
             if key in self.measurements:
-                shown = computed_by_test.get(key) or "внесено"
-                mark = "[x] " + shown
+                mark = "[x] " + (shown or "внесено")
+            elif shown:
+                # A value with no measurement under it: pinned by hand, or
+                # carried over from an older preset.
+                mark = "[·] " + shown
             else:
                 mark = "[ ] —"
+            if pinned and shown:
+                mark += " · вручную"
             items.append((key, "плита %s · %-14s %s" % (test["order"], key, mark)))
         items.append(("__all__", "Пройти все плиты по порядку"))
         items.append(("__finish__", "Показать итог и выйти"))
@@ -352,6 +455,7 @@ class Session(object):
         self.spool = self.spool or self.choose_spool()
         self.load_run()
         self.tests = scales.tests_for(self.scales, self.material)
+        self.load_manual()
 
         c.say("\n%s%s · %s%s" % (c.BOLD, self.spool, self.material, c.RESET))
         c.say("База: %s" % self.base)
@@ -376,9 +480,15 @@ class Session(object):
             return 1
 
     def _loop(self):
+        first_pass = True
         while True:
             fields, _, errors = scales.compute_all(self.tests, self.measurements,
                                                    self.base_values)
+            if first_pass:
+                first_pass = False
+                if self.reconcile_with_slicer(fields):
+                    self.save_manual()
+            fields = self.with_manual(fields)
             by_test = {}
             for test in self.tests:
                 shown = [formulas.format_field(f, fields[f])
@@ -407,17 +517,19 @@ class Session(object):
             for test in queue:
                 fields_now, _, _ = scales.compute_all(self.tests, self.measurements,
                                                       self.base_values)
-                plate = self.prepare_plate(test, fields_now)
+                plate = self.prepare_plate(test, self.with_manual(fields_now))
                 accepted = self.enter_plate(test, plate)
                 self.save_measurements()
                 if not accepted:
                     continue
+                self.release_manual(test)
                 fields_now, _, _ = scales.compute_all(self.tests, self.measurements,
                                                       self.base_values)
-                self.save_preset(fields_now, ask=False)
+                self.save_preset(self.with_manual(fields_now), ask=False)
 
         fields, _, _ = scales.compute_all(self.tests, self.measurements,
                                           self.base_values)
+        fields = self.with_manual(fields)
         if not fields:
             c.say("\nНи одного замера — писать нечего.")
             return 0

@@ -31,6 +31,48 @@ class PresetWriteError(Exception):
     """Writing failed. The original file, if there was one, is intact."""
 
 
+def read_current(targets, fields):
+    """What the spool's preset holds right now, as {field: string}.
+
+    The calibrator rebuilds the preset from the journal in full, so anything
+    edited by hand in the slicer would be overwritten without a word. Reading
+    the file first is what makes it possible to notice and ask instead.
+
+    Only the fields the calibrator owns come back; the rest of the preset is
+    none of its business.
+    """
+    wanted = set(fields or ())
+    for path in targets:
+        if not os.path.exists(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                node = json.load(f)
+        except (OSError, ValueError):
+            return {}
+        current = {}
+        for field, value in node.items():
+            if field not in wanted:
+                continue
+            if isinstance(value, list):
+                value = value[0] if value else None
+            if value is not None:
+                current[field] = str(value)
+        return current
+    return {}
+
+
+def differences(computed, current):
+    """{field: (what the slicer has, what we computed)} where they disagree."""
+    out = {}
+    for field, value in (computed or {}).items():
+        was = (current or {}).get(field)
+        now = formulas.format_field(field, value)
+        if was is not None and was != now:
+            out[field] = (was, now)
+    return out
+
+
 def build(name, base, fields, compatible_printers, vendor=None, version=None):
     """An overlay preset: only what was actually measured.
 

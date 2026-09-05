@@ -162,5 +162,12 @@ ROUNDING = {
 
 
 def format_field(field, value):
-    """Render a number the way the preset stores it."""
+    """Render a number the way the preset stores it.
+
+    A string passes through untouched: that is how a value pinned by hand in
+    the slicer arrives - already in the preset's own form, with nothing left to
+    round, and every rounding function above expects a number.
+    """
+    if isinstance(value, str):
+        return value
     return ROUNDING.get(field, str)(value)
