@@ -86,7 +86,13 @@ def compute(test, measurement, base_values):
         why = "блок №{} снизу".format(number)
 
     elif kind == "continuous":
-        ceiling = params.get("ceiling") or (params["start"] + params["step_per_mm"] * 40)
+        # The ramp levels off at the "end volumetric speed" typed into Orca's
+        # dialog, and nowhere else. This used to read start + step * 40, which
+        # silently assumed the end was always 20. Type a larger one and the
+        # tower gets taller, the ramp climbs all the way to the top, and the
+        # formula would cut an honest measurement down to an invented ceiling:
+        # a failure at 46 mm is 22.4 mm3/s, reported as 20.
+        ceiling = params.get("end") or params.get("ceiling")
         raw = formulas.continuous(params["start"], params["step_per_mm"],
                                   measurement, ceiling)
         margin = params.get("margin", 1.0)

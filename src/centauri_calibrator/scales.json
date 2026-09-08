@@ -140,7 +140,8 @@
           "params": {
             "start": 5.0,
             "step_per_mm": 0.5,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 25.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -343,7 +344,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 25.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -546,7 +548,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -749,7 +752,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -953,7 +957,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -1156,7 +1161,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -1360,7 +1366,8 @@
           "params": {
             "start": 3.0,
             "step_per_mm": 0.3,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 15.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -1563,7 +1570,8 @@
           "params": {
             "start": 1.0,
             "step_per_mm": 0.15,
-            "margin": 0.8
+            "margin": 0.8,
+            "end": 7.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
