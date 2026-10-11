@@ -188,8 +188,9 @@ def test_reminder_text_is_two_lines_at_most():
 
 
 def test_support_links_are_present_and_untracked():
-    assert support.TRIBUTE_URL_WEB.startswith("https://")
-    for url in (support.TRIBUTE_URL_WEB, support.TRIBUTE_URL_TELEGRAM):
+    assert support.DONATE_URL.startswith("https://pay.cloudtips.ru/p/")
+    assert support.TRIBUTE_URL.startswith("https://")
+    for url in (support.DONATE_URL, support.TRIBUTE_URL):
         for marker in ("utm_", "ref=", "click_id"):
             assert marker not in url.lower()
 
@@ -199,15 +200,15 @@ def test_about_screen_lists_every_link():
     assert support.GITHUB_URL in text
     assert support.ISSUES_URL in text
     assert support.SUPPORT_BOT_URL in text
-    assert support.TRIBUTE_URL_WEB in text
+    assert support.DONATE_URL in text
 
 
 def test_browser_is_never_opened_without_confirmation():
     opened = []
-    assert support.open_tribute(confirm=False, opener=opened.append) is False
+    assert support.open_donate_page(confirm=False, opener=opened.append) is False
     assert opened == []
-    assert support.open_tribute(confirm=True, opener=opened.append) is True
-    assert opened == [support.TRIBUTE_URL_WEB]
+    assert support.open_donate_page(confirm=True, opener=opened.append) is True
+    assert opened == [support.DONATE_URL]
 
 
 def test_machine_presets_are_deduplicated_across_accounts(fake_orca):

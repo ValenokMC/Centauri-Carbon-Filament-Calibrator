@@ -16,8 +16,11 @@ import webbrowser
 from . import paths
 
 
-TRIBUTE_URL_TELEGRAM = "https://t.me/tribute/app?startapp=dP54"
-TRIBUTE_URL_WEB = "https://web.tribute.tg/d/P54"
+# CloudTips is the main page: a lower fee than Tribute, and it takes SBP and any
+# Russian bank card. Tribute stays for paying with a foreign card, but only in
+# README and FUNDING.yml - the program itself shows one link, not a choice.
+DONATE_URL = "https://pay.cloudtips.ru/p/5440d07c"
+TRIBUTE_URL = "https://web.tribute.tg/d/P54"
 
 GITHUB_URL = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator"
 ISSUES_URL = GITHUB_URL + "/issues"
@@ -30,7 +33,7 @@ STATE_FILE = "support.json"
 
 # Two lines. No more.
 REMINDER_TEXT = ("Если калибратор оказался полезен, можно поддержать его развитие:\n"
-                 "  " + TRIBUTE_URL_WEB)
+                 "  " + DONATE_URL)
 
 
 def _state_path():
@@ -106,16 +109,16 @@ def about_lines():
         "  Документация  %s" % GITHUB_URL,
         "  Об ошибках    %s" % ISSUES_URL,
         "  Написать      %s" % SUPPORT_BOT_URL,
-        "  Поддержать    %s" % TRIBUTE_URL_WEB,
+        "  Поддержать    %s" % DONATE_URL,
     ]
 
 
-def open_tribute(confirm=True, opener=webbrowser.open):
+def open_donate_page(confirm=True, opener=webbrowser.open):
     """Open the support page - only after an explicit yes."""
     if not confirm:
         return False
     try:
-        opener(TRIBUTE_URL_WEB)
+        opener(DONATE_URL)
         return True
     except Exception:
         return False

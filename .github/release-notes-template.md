@@ -14,7 +14,7 @@ creates or updates a filament preset without editing Python or JSON by hand.
   read-only environment report.
 - Atomic preset updates with timestamped backups, path-safe spool names and
   user data stored outside the program folder.
-- Tribute support is available from `About.cmd`, with one unobtrusive note after
+- Support via CloudTips is available from `About.cmd`, with one unobtrusive note after
   a successful preset save at most once per month.
 
 ## Fixes

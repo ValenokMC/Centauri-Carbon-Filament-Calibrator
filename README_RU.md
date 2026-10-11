@@ -17,7 +17,7 @@
 
 [English](README.md) · **Русский**
 
-[Изменения](CHANGELOG.md) · [Документация](docs/installation.md) · [Поддержка](SUPPORT.md) · [Telegram](https://t.me/SupporBiBot?start=centauri_calibrator) · [Поддержать автора](https://web.tribute.tg/d/P54)
+[Изменения](CHANGELOG.md) · [Документация](docs/installation.md) · [Поддержка](SUPPORT.md) · [Telegram](https://t.me/SupporBiBot?start=centauri_calibrator) · [Поддержать автора](https://pay.cloudtips.ru/p/5440d07c)
 
 ### [⬇ Скачать для Windows](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/latest)
 
@@ -225,7 +225,9 @@ OrcaSlicer**. В его моделях уже есть подписи и нас�
 
 <div align="center">
 
-### [☕ Поддержать на Tribute](https://web.tribute.tg/d/P54)
+### [☕ Поддержать на CloudTips](https://pay.cloudtips.ru/p/5440d07c)
+
+СБП или любой российской картой. Иностранной картой — через [Tribute](https://web.tribute.tg/d/P54).
 
 </div>
 
