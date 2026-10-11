@@ -100,7 +100,7 @@ def cmd_about():
         c.say(line)
     c.say("")
     if c.ask_yes("Открыть страницу поддержки в браузере?", default=False):
-        if support.open_tribute(confirm=True):
+        if support.open_donate_page(confirm=True):
             c.ok("Открыл.")
         else:
             c.warn("Не открылось — ссылка выше.")

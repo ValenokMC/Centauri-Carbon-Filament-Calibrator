@@ -7,7 +7,11 @@ this project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- `About.cmd` and the monthly note now point to CloudTips instead of Tribute: a
+  lower fee, and it takes SBP and any Russian bank card. Tribute stays in the
+  README and the GitHub Sponsor button for paying with a foreign card.
 
 ## [1.0.0] — 2026-08-23
 

@@ -39,7 +39,7 @@ Homepage = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator"
 Documentation = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/docs/installation.md"
 Changelog = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/CHANGELOG.md"
 Issues = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/issues"
-Funding = "https://web.tribute.tg/d/P54"
+Funding = "https://pay.cloudtips.ru/p/5440d07c"
 
 [tool.setuptools.packages.find]
 where = ["src"]

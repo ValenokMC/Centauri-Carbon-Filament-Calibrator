@@ -140,11 +140,12 @@
           "params": {
             "start": 5.0,
             "step_per_mm": 0.5,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 25.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
-          "hint": "разгон 5 → 25 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку",
+          "hint": "разгон 5 → 25 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas.",
           "file": "{material}/4_max_flow.3mf",
           "fields": [
             "filament_max_volumetric_speed"
@@ -343,7 +344,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 25.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -355,7 +357,7 @@
             4.0,
             25.0
           ],
-          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
@@ -546,7 +548,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -558,7 +561,7 @@
             4.0,
             25.0
           ],
-          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
@@ -749,7 +752,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -761,7 +765,7 @@
             4.0,
             25.0
           ],
-          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
@@ -953,7 +957,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -965,7 +970,7 @@
             4.0,
             25.0
           ],
-          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
@@ -1156,7 +1161,8 @@
           "params": {
             "start": 4.0,
             "step_per_mm": 0.4,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 20.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -1168,7 +1174,7 @@
             4.0,
             25.0
           ],
-          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 4 → 20 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
@@ -1360,7 +1366,8 @@
           "params": {
             "start": 3.0,
             "step_per_mm": 0.3,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 15.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -1372,7 +1379,7 @@
             4.0,
             25.0
           ],
-          "hint": "разгон 3 → 15 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 3 → 15 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
@@ -1563,7 +1570,8 @@
           "params": {
             "start": 1.0,
             "step_per_mm": 0.15,
-            "margin": 0.9
+            "margin": 0.8,
+            "end": 7.0
           },
           "input": "continuous",
           "question": "Высота, на которой пошла недоэкструзия, мм",
@@ -1575,7 +1583,7 @@
             0.5,
             10.0
           ],
-          "hint": "разгон 1 → 7 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку"
+          "hint": "разгон 1 → 7 мм³/с по 42 мм высоты. Ищи, где линии начали рваться и просвечивать, а поверхность стала шершавой. Берётся не сама точка срыва, а 90% от неё — запас на холодную камеру и подсохшую катушку Margin is 0.8, not 0.9: the tower prints in vase mode - one wall, no corners, no acceleration - so a real part is harder on the hotend. At 0.9 solid infill sat exactly on the ceiling and left gaps on large flat areas."
         },
         {
           "key": "retraction",
