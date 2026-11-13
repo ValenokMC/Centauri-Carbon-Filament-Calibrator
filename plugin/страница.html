@@ -433,7 +433,7 @@ $('dlg').onsubmit=async e=>{e.preventDefault();
   if(!r.ок){$('nPreview').textContent=r.ошибка;$('nPreview').style.color='var(--bad)';return}
   $('veil').classList.remove('show');tst=null;done(r)};
 
-/* ── раздел «Принтер» ── */
+let hostInfo={};
 function diag(){
   $('diagText').textContent=JSON.stringify({хост:hostInfo,пути:S&&S.пути,базы_известны:S&&S.базы_известны,беды:S&&S.беды,ошибки:log.slice(0,3)},null,1);
 }

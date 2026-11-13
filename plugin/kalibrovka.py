@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["trimesh>=4.7", "numpy", "shapely", "mapbox-earcut"]
+# dependencies = ["trimesh>=4.7", "numpy", "shapely", "mapbox-earcut", "DracoPy", "scipy"]
 #
 # [tool.orcaslicer.plugin]
 # name = "Калибровка пластика"
@@ -239,7 +239,7 @@ def _поток_базы(база, строго=False):
     """Коэффициент потока базы. Подставить единицу молча — значит сдвинуть поток
     на 2%: у профилей Elegoo база 0.98. Поэтому без снимка запись — отказ."""
     try:
-        return float(_базы()[база]['filament_flow_ratio'])
+        return float(str(_базы()[база]['filament_flow_ratio']).split(',', 1)[0])
     except (KeyError, ValueError, TypeError):
         if строго:
             raise Отказ('нет базовых значений профиля «{}». Они снимаются из Orca при '
@@ -786,8 +786,7 @@ def плита(имя, ключ, активные):
                     raise Отказ('Недостаточно места для башни расхода.')
             elif активные['диалект'] not in ('klipper', 'marlin', 'marlin2', 'reprapfirmware', 'reprap'):
                 raise Отказ('Автоматическая башня PA пока недоступна для этого диалекта G-code.')
-            штатная = штатная_башня(активные['exe'], активные['ресурсы'], к['папка'],
-                                    ключ, низ, верх, ширина)
+            штатная = штатная_башня(активные['ресурсы'], ключ, низ, верх, ширина)
         описание = плита_теста(
             ключ, параметры, штатная=штатная, стол=активные['стол'], сопло=активные['сопло'],
             поток_процесса=активные['поток_процесса'], диалект=активные['диалект'])
@@ -1011,9 +1010,9 @@ def _новая_в_orca(материал):
     if any(имя == name for _, имя, _ in _катушки_журнала()):
         raise Отказ('Выбери исходный профиль филамента для новой катушки.')
     поля = {поле for тест in _шкалы()['материалы'][материал]['тесты'] for поле in тест['поля']}
-    values = {поле: _resolved(bundle.filaments, name, поле) for поле in поля}
+    values = {поле: _plain(bundle.full_config_value(поле)) for поле in поля}
     profiles = _базы()
-    profiles[name] = {key: value for key, value in values.items() if value is not None}
+    profiles[name] = {key: value.split(',', 1)[0] for key, value in values.items() if value is not None}
     записать_базы(profiles, host_info().get('orca', ''))
     return {'база': name, 'принтер': bundle.current_printer_preset().name}
 
@@ -1026,6 +1025,12 @@ def _активная_плита():
         raise Отказ('Выбери филамент в первом слоте Orca.')
     def current(key):
         return _plain(bundle.full_config_value(key))
+
+    def number(key, value):
+        try:
+            return float(value.split(',', 1)[0])
+        except (AttributeError, ValueError) as error:
+            raise Отказ('В активном профиле Orca не удалось прочитать {}.'.format(key)) from error
 
     points = bundle.full_config_value('printable_area')
     if not points:
@@ -1046,12 +1051,12 @@ def _активная_плита():
         raise Отказ('Не удалось определить папку установленной Orca.')
     return {
         'принтер': printer.name, 'филамент': names[0],
-        'сопло': float(current('nozzle_diameter')), 'диалект': current('gcode_flavor'),
-        'поток_филамента': float(current('filament_flow_ratio')),
-        'поток_процесса': float(current('print_flow_ratio') or 1),
-        'exe': Path(exe.value), 'ресурсы': Path(exe.value).parent / 'resources', 'начало': (x0, y0),
+        'сопло': number('nozzle_diameter', current('nozzle_diameter')), 'диалект': current('gcode_flavor'),
+        'поток_филамента': number('filament_flow_ratio', current('filament_flow_ratio')),
+        'поток_процесса': number('print_flow_ratio', current('print_flow_ratio') or '1'),
+        'ресурсы': Path(exe.value).parent / 'resources', 'начало': (x0, y0),
         'стол': (x1 - x0, y1 - y0), 'центр': ((x0 + x1) / 2, (y0 + y1) / 2),
-        'границы': (x0, y0, x1, y1), 'высота': float(current('printable_height')),
+        'границы': (x0, y0, x1, y1), 'высота': number('printable_height', current('printable_height')),
     }
 
 

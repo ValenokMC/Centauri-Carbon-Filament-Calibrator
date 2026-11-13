@@ -1,11 +1,17 @@
 """Загрузка и подрезка штатных башен из установленной OrcaSlicer."""
 
-import os
-from pathlib import Path
-import subprocess
-import tempfile
-
+import DracoPy
+import mapbox_earcut
+import scipy.sparse
+import shapely
 import trimesh
+
+# Подготовить ленивые импорты геометрии до обработки сообщений WebView.
+def _подготовить_подрезку():
+    trimesh.creation.box().slice_plane((0, 0, 0), (0, 0, 1), cap=True, engine='earcut')
+
+
+_подготовить_подрезку()
 
 БАШНИ_ORCA = {
     'температура': ('temperature_tower', 'temperature_tower.drc'),
@@ -14,20 +20,12 @@ import trimesh
 }
 
 
-def штатная_башня(исполняемый, ресурсы, рабочая, ключ, низ, верх, ширина=None):
+def штатная_башня(ресурсы, ключ, низ, верх, ширина=None):
     модель = ресурсы.joinpath('calib', *БАШНИ_ORCA[ключ])
     if not модель.is_file():
         raise FileNotFoundError('Штатная модель OrcaSlicer не найдена: ' + модель.name)
-    with tempfile.TemporaryDirectory(prefix='orca-mesh-', dir=рабочая) as временная:
-        результат = subprocess.run(
-            [str(исполняемый), '--export-stl', '--outputdir', временная, str(модель)],
-            cwd=временная, capture_output=True, timeout=30,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
-        )
-        выход = list(Path(временная).rglob('*.stl'))
-        if результат.returncode or len(выход) != 1:
-            raise ValueError('OrcaSlicer не смогла экспортировать штатную модель ' + модель.name)
-        сетка = trimesh.load_mesh(выход[0])
+    данные = DracoPy.decode(модель.read_bytes())
+    сетка = trimesh.Trimesh(данные.points, данные.faces)
 
     if not сетка.is_watertight or not 0 <= низ < верх <= сетка.bounds[1, 2]:
         raise ValueError('Неподдерживаемая сетка или диапазон высоты башни ' + модель.name)
