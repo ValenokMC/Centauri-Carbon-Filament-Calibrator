@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="ru" data-theme="dark" data-view="plastic">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калибровка пластика</title>
+<style>
+/* Orca подмешивает в страницу свою тему: правила для голых тегов body, button, input,
+   select, table. Они перебивают наши правила той же силы, поэтому всё, что касается
+   тегов, здесь усилено вторым селектором (html body, .app button и т. п.). */
+:root{
+  --bg:oklch(17% .03 265); --card:oklch(100% 0 0 / .055); --card2:oklch(100% 0 0 / .1);
+  --fg:oklch(96% .01 265); --muted:oklch(74% .03 265); --line:oklch(100% 0 0 / .13);
+  --field:oklch(0% 0 0 / .25);
+  --acc:oklch(86% .13 180); --acc2:oklch(84% .1 225); --on-acc:oklch(22% .04 200);
+  --ok:oklch(86% .16 150); --warn:oklch(84% .15 85); --bad:oklch(78% .13 22);
+  --shadow:0 18px 44px oklch(0% 0 0 / .35); --blob:.5;
+  --text:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --display:"Segoe UI Variable Display","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+}
+[data-theme=light]{
+  --bg:oklch(95% .015 265); --card:oklch(100% 0 0 / .6); --card2:oklch(100% 0 0 / .9);
+  --fg:oklch(24% .04 265); --muted:oklch(48% .04 265); --line:oklch(30% .05 265 / .14);
+  --field:oklch(100% 0 0 / .75);
+  --acc:oklch(58% .11 185); --acc2:oklch(56% .13 235); --on-acc:oklch(99% 0 0);
+  --ok:oklch(52% .14 150); --warn:oklch(55% .13 70); --bad:oklch(52% .18 25);
+  --shadow:0 16px 40px oklch(40% .06 265 / .14); --blob:.36;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+html:root{background:var(--bg)}
+html body{font:15px/1.5 var(--text);color:var(--fg);background:var(--bg);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+html button,html input,html select{font:inherit}
+.app button,.dlg button{color:var(--fg);cursor:pointer}
+:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+.blob{position:fixed;border-radius:50%;filter:blur(100px);opacity:var(--blob);z-index:0;pointer-events:none}
+.b1{width:540px;height:540px;background:oklch(70% .13 180);left:-160px;top:-180px}
+.b2{width:580px;height:580px;background:oklch(55% .2 275);right:-200px;top:8%}
+.b3{width:460px;height:460px;background:oklch(78% .15 75);left:32%;bottom:-300px;opacity:calc(var(--blob)*.5)}
+
+.app{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px;display:grid;gap:16px;
+  grid-template-columns:280px minmax(0,1fr) 320px;grid-template-areas:"top top top" "side main right" "foot foot foot"}
+.glass{background:var(--card);border:1px solid var(--line);border-radius:22px;
+  backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);box-shadow:var(--shadow)}
+header{grid-area:top;display:flex;align-items:center;gap:12px;padding:12px 18px;flex-wrap:wrap}
+header h1{font:650 19px/1.2 var(--display);margin:0;color:var(--fg);letter-spacing:-.01em}
+.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;color:var(--on-acc);font:800 16px var(--display)}
+.sp{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font-size:13px;color:var(--muted);white-space:nowrap}
+header button.chip{color:var(--muted)}
+header button.chip:hover{color:var(--fg)}
+aside{grid-area:side;padding:14px;align-self:start}
+main{grid-area:main;display:grid;gap:16px;min-width:0;align-content:start}
+.right{grid-area:right;display:grid;gap:16px;align-self:start}
+footer{grid-area:foot;font-size:12.5px;color:var(--muted)}
+body h2{font:600 12px/1.3 var(--text);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:2px 4px 10px}
+
+/* список катушек */
+.spool{display:flex;gap:11px;align-items:center;width:100%;text-align:left;padding:10px 11px;border-radius:15px;border:1px solid transparent;background:none}
+.spool:hover{background:var(--card2)}
+.spool.on{background:var(--card2);border-color:var(--line)}
+.reel{flex:none;width:34px;height:34px;border-radius:50%;border:6px solid var(--c,gray);box-shadow:inset 0 0 0 4px oklch(0% 0 0 / .22)}
+.spool b{display:block;font-weight:600;font-size:14.5px;overflow-wrap:anywhere;line-height:1.25}
+.spool small{color:var(--muted);font-size:12.5px}
+.cnt{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.cnt.full{color:var(--ok)}
+.app .spool.new{margin-top:8px;justify-content:center;border:1px dashed var(--line);color:var(--muted);font-weight:600}
+.app .spool.new:hover{color:var(--fg)}
+
+/* шапка катушки и дорожка тестов */
+.hero{padding:18px 22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero h3{margin:0;font:650 26px/1.15 var(--display);letter-spacing:-.02em;overflow-wrap:anywhere;color:var(--fg)}
+.hero p{margin:3px 0 0;color:var(--muted);font-size:14px}
+.meter{width:150px}
+.meter b{font:650 15px var(--display)}
+.meter i{display:block;height:7px;border-radius:9px;background:var(--card2);margin-top:6px;overflow:hidden}
+.meter i::after{content:"";display:block;height:100%;width:var(--w);border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
+.chain{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.step{padding:12px 13px;border-radius:17px;text-align:left;position:relative;transition:transform .15s,border-color .15s}
+.step:hover{transform:translateY(-2px)}
+.step.on{background:var(--card2);border-color:var(--acc)}
+.step .n{font-size:12px;color:var(--muted)}
+.step .t{font-weight:600;font-size:14.5px;margin:1px 0 8px;line-height:1.2}
+.step .v{font:650 21px/1.1 var(--display)}
+.step .v small{font:500 12px var(--text);color:var(--muted)}
+.st{position:absolute;top:12px;right:12px;width:9px;height:9px;border-radius:50%;background:var(--line)}
+.st.замер{background:var(--ok)}.st.вручную{background:var(--warn)}.st.ошибка{background:var(--bad)}
+.next{position:absolute;top:8px;right:9px;font-size:10.5px;padding:1px 8px;border-radius:99px;background:var(--acc);color:var(--on-acc);font-weight:700}
+
+/* рабочая карточка: три шага */
+.work{padding:6px 22px 20px}
+.work>h4{font:650 22px/1.2 var(--display);margin:16px 0 0;color:var(--fg);letter-spacing:-.015em}
+.stage{display:grid;grid-template-columns:38px minmax(0,1fr);gap:14px;padding:18px 0;border-bottom:1px solid var(--line)}
+.stage:last-child{border-bottom:0;padding-bottom:0}
+.num{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:650 16px var(--display);background:var(--card2);border:1px solid var(--line);color:var(--muted)}
+.stage h5{margin:0 0 4px;font:600 16.5px/1.3 var(--display);color:var(--fg)}
+.stage p{margin:0;color:var(--muted);max-width:62ch;text-wrap:pretty}
+.stage ol{margin:8px 0 0;padding-left:20px;color:var(--muted);max-width:66ch}
+.stage li{margin:3px 0}
+.pick{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 4px}
+.pick button{min-width:60px;padding:10px 9px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:15px}
+.pick button:hover{background:var(--card2)}
+#work .pick button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--on-acc);border-color:transparent;font-weight:700}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 4px}
+body input[type=range]{flex:1;min-width:160px;accent-color:var(--acc)}
+body input[type=number],body input[type=text],body select{padding:10px 13px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--fg);min-width:0}
+body input[type=number]{width:130px;font:600 18px var(--display)}
+body select option{background:var(--bg);color:var(--fg)}
+label.chk{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--muted);margin:10px 0 0;max-width:62ch}
+.calc{margin-top:12px;padding:14px 16px;border-radius:16px;background:var(--card2);border:1px solid var(--line);display:flex;gap:16px;align-items:baseline;flex-wrap:wrap}
+.calc .big{font:700 34px/1 var(--display);color:var(--acc);letter-spacing:-.02em}
+.calc.err .big{color:var(--bad);font:600 15px/1.4 var(--text);letter-spacing:0}
+.calc .why{color:var(--muted);font-size:13.5px}
+.btns{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.btn{padding:11px 18px;border-radius:13px;border:1px solid var(--line);background:var(--card2);font-weight:600;font-size:15px;transition:filter .15s,transform .1s}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:scale(.98)}
+.app .btn.pri,.dlg .btn.pri{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--on-acc);border-color:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.done{color:var(--ok);font-size:13.5px;font-weight:600}
+
+/* правая колонка */
+.card{padding:16px 18px}
+body table{width:100%;border-collapse:collapse;font-size:14px;background:none}
+body td,body th{padding:7px 4px;text-align:right;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg)}
+body td:first-child,body th:first-child{text-align:left;color:var(--muted)}
+body th{font-weight:500;color:var(--muted);font-size:12px}
+body tr:last-child td{border-bottom:0}
+body tr:hover td{background:none}
+.bar{display:grid;grid-template-columns:112px 1fr 42px;gap:8px;align-items:center;font-size:13px;margin:8px 0}
+.bar span:first-child{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar i{display:block;height:8px;border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.bar .trk{background:var(--card2);border-radius:9px}
+.bar.me span:first-child{color:var(--fg);font-weight:600}
+.note{font-size:13px;color:var(--muted);margin-top:8px}
+.msg{display:flex;gap:9px;font-size:14px;margin:8px 0;align-items:flex-start}
+.msg::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:var(--muted)}
+.msg.хорошо::before{background:var(--ok)}.msg.внимание::before{background:var(--warn)}.msg.плохо::before{background:var(--bad)}
+
+.banner{padding:12px 18px;font-size:14.5px;display:none;gap:10px;align-items:center}
+.banner.show{display:flex}
+.banner.warn{border-color:var(--warn)}.banner.bad{border-color:var(--bad)}
+.app .banner button{margin-left:auto;background:none;border:0;color:var(--muted);font-size:18px}
+.toast{position:fixed;left:50%;bottom:24px;translate:-50% 90px;padding:12px 20px;border-radius:15px;z-index:9;transition:translate .3s;font-weight:600;max-width:90vw}
+.toast.show{translate:-50% 0}
+.veil{position:fixed;inset:0;background:oklch(10% .03 265 / .55);z-index:8;display:none;place-items:center;padding:16px}
+.veil.show{display:grid}
+.dlg{width:min(460px,100%);padding:22px;display:grid;gap:13px}
+.dlg h4{margin:0;font:650 20px var(--display);color:var(--fg)}
+.dlg label{display:grid;gap:5px;font-size:13px;color:var(--muted)}
+.empty{padding:44px 20px;text-align:center;color:var(--muted)}
+details summary{cursor:pointer}
+details.note[open]{max-width:66ch}
+body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+/* два раздела: «Пластик» (.f) и «Принтер» (.p) */
+[data-view=plastic] .p,[data-view=printer] .f{display:none}
+.seg{display:inline-flex;padding:3px;border-radius:999px;background:var(--card2);border:1px solid var(--line)}
+.app .seg button{border:0;background:none;padding:6px 18px;border-radius:999px;font-weight:600;font-size:14px;color:var(--muted)}
+.app .seg button.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--on-acc)}
+.grp{font:600 12px/1.3 var(--text);text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:14px 6px 6px}
+.dotrow{display:flex;gap:10px;align-items:flex-start;margin:9px 0;font-size:14px}
+.dotrow::before{content:"";flex:none;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--bad)}
+.dotrow.ok::before{background:var(--ok)}
+.dotrow b{display:block;font-weight:600}
+.dotrow span{color:var(--muted);font-size:13px}
+.sym{font-size:13.5px;margin:9px 0;line-height:1.35}
+.sym b{display:block;font-weight:600}
+.sym span{color:var(--muted)}
+.logrow{font-size:13px;margin:9px 0;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.logrow:last-child{border-bottom:0}
+.logrow b{font-weight:600}
+.logrow span{color:var(--muted);display:block;overflow-wrap:anywhere}
+.app .btn.arm{border-color:var(--warn);color:var(--warn)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:1180px){.app{grid-template-columns:250px minmax(0,1fr);grid-template-areas:"top top" "side main" "right right" "foot foot"}.right{grid-template-columns:1fr 1fr}}
+@media (max-width:800px){.app{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "side" "main" "right" "foot";padding:14px}.chain{grid-template-columns:repeat(3,minmax(0,1fr))}.right{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div class="app">
+  <header class="glass">
+    <div class="logo">К</div><h1 id="title">Калибровка пластика</h1>
+
+    <span class="sp"></span>
+    <span class="chip" id="printer"></span>
+    <button class="chip" id="theme" title="Сменить тему"></button>
+  </header>
+
+  <aside class="glass f"><h2>Катушки</h2><div id="spools"></div>
+    <button class="spool new" id="add">+ Новая катушка</button></aside>
+
+  <main>
+    <div class="glass banner" id="banner"><span id="bannerText"></span><button id="bannerX" aria-label="Скрыть">×</button></div>
+    <div id="content" class="f"></div>
+  </main>
+
+  <div class="right f">
+    <section class="glass card"><h2 style="margin-left:0">Что в пресете</h2>
+      <table id="preset"></table><div class="note" id="home"></div></section>
+    <section class="glass card" id="nozzleCard"><h2 style="margin-left:0">Другие сопла</h2>
+      <table id="nozzles"></table><div class="note" id="nozzleNote"></div>
+      <div class="btns" id="nozzleBtn"></div></section>
+    <section class="glass card"><h2 style="margin-left:0">Сейчас выбрано в Orca</h2>
+      <div id="check"><div class="note">Проверяю…</div></div></section>
+    <section class="glass card"><h2 style="margin-left:0">Макс. расход, мм³/с</h2><div id="bars"></div></section>
+  </div>
+
+  <footer><details id="diag"><summary>Диагностика</summary><pre id="diagText"></pre></details></footer>
+</div>
+
+<div class="veil" id="veil"><form class="glass dlg" id="dlg">
+  <h4>Новая катушка</h4>
+  <label>Материал<select id="nMat"></select></label>
+  <p class="note">База новой катушки — профиль, выбранный в первом слоте филамента Orca.</p>
+  <label>Производитель<input type="text" id="nVendor" list="vendors" placeholder="ELEGOO" required><datalist id="vendors"></datalist></label>
+  <label>Название с этикетки<input type="text" id="nName" placeholder="Matte PLA" required></label>
+  <div class="note" id="nPreview"></div>
+  <div class="btns"><button class="btn pri" type="submit">Завести</button><button class="btn" type="button" id="nCancel">Отмена</button></div>
+</form></div>
+<div class="toast glass" id="toast"></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HUES=[350,255,165,85,300,25,205,55];
+// Цвет катушки — от имени, а не от места в списке: новая катушка не должна перекрашивать остальные.
+const color=n=>{let h=0;for(const c of String(n))h=(h*31+c.codePointAt(0))>>>0;return `oklch(74% .15 ${HUES[h%HUES.length]})`};
+const HOST=window.orca||null;
+let S=null, sel=null, tst=null, draft=null, repeat=true, loaded={}, seq=0;
+const wait=new Map(), log=[];
+
+function send(действие, extra){
+  return new Promise(res=>{
+    if(!HOST){res({ок:false,ошибка:'Страница открыта без Orca и без dev_server.py — данных нет.'});return}
+    const id=++seq; wait.set(id,res); HOST.postMessage(Object.assign({id,действие},extra||{}));
+    // Срок большой: Orca может показать окно разрешения, и ответ придёт после него.
+    setTimeout(()=>{if(wait.has(id)){wait.delete(id);res({ок:false,ошибка:'Нет ответа на «'+действие+'»'})}},180000);
+  });
+}
+if(HOST) HOST.onMessage(d=>{
+  if(typeof d==='string'){try{d=JSON.parse(d)}catch(e){return}}
+  if(d&&d.событие){ if(/Preset/.test(d.событие)) check(); return }
+  const r=d&&wait.get(d.id); if(r){wait.delete(d.id); r(d)}
+});
+// Плавные переходы браузера (view transitions) здесь отключены намеренно: они откладывают
+// перерисовку до следующего кадра, и на притормаживающей странице щелчок «не срабатывал».
+const smooth=fn=>fn();
+
+/* ── тема ── */
+const THEMES=['auto','dark','light'], TNAME={auto:'Тема: авто',dark:'Тема: тёмная',light:'Тема: светлая'};
+let theme='auto';
+function hostIsDark(){
+  // Orca подсовывает свою тему переменной --orca-bg; вне Orca её нет — смотрим на систему.
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--orca-bg').trim();
+  let rgb=null, h=bg.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if(h){const s=h[1].length===3?h[1].replace(/./g,'$&$&'):h[1];rgb=[0,2,4].map(i=>parseInt(s.substr(i,2),16))}
+  else if(/^rgb/i.test(bg)) rgb=bg.match(/\d+/g).slice(0,3).map(Number);
+  if(rgb) return (rgb[0]*299+rgb[1]*587+rgb[2]*114)/1000<128;
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function applyTheme(){
+  document.documentElement.dataset.theme=theme==='auto'?(hostIsDark()?'dark':'light'):theme;
+  $('theme').textContent=TNAME[theme];
+}
+$('theme').onclick=()=>{theme=THEMES[(THEMES.indexOf(theme)+1)%3];applyTheme();send('настройка',{ключ:'тема',значение:theme})};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+
+/* ── помощники ── */
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2800)}
+function banner(text,kind){$('bannerText').textContent=text;$('banner').className='glass banner show '+(kind||'')}
+$('bannerX').onclick=()=>$('banner').classList.remove('show');
+const spool=()=>S&&S.катушки.find(k=>k.имя===sel);
+const tests=k=>S.материалы[k.материал].тесты;
+const test=()=>{const k=spool();return k&&tests(k).find(t=>t.ключ===tst)};
+const nextKey=k=>(tests(k).find(t=>!k.значения[t.ключ])||{}).ключ;
+const fmt=(v,d)=>Number(v).toFixed(d);
+function fail(r){ if(r.след) log.unshift(r.след); banner(r.ошибка||'Не получилось','bad'); diag() }
+
+/* ── список, шапка, дорожка ── */
+function renderAll(){
+  if(!S) return;
+  $('printer').textContent=S.принтер||'принтер не задан';
+  if(!sel||!spool()) sel=(S.катушки[0]||{}).имя||null;
+  const k=spool();
+  if(k&&(!tst||!test())) tst=nextKey(k)||tests(k)[0].ключ;
+  $('spools').innerHTML=S.катушки.map(x=>`<button class="spool${x.имя===sel?' on':''}" data-n="${esc(x.имя)}">
+    <span class="reel" style="--c:${color(x.имя)}"></span><span><b>${esc(x.имя)}</b><small>${esc(x.материал)}</small></span>
+    <span class="cnt${x.готово===x.всего?' full':''}">${x.готово===x.всего?'готово':x.готово+' из '+x.всего}</span></button>`).join('')
+    ||'<div class="note" style="padding:8px">Пока ни одной катушки.</div>';
+  document.querySelectorAll('#spools .spool').forEach(b=>b.onclick=()=>smooth(()=>{sel=b.dataset.n;tst=null;draft=null;renderAll()}));
+  if(!k){$('content').innerHTML='<div class="glass empty">Заведи первую катушку — кнопка слева.</div>';$('preset').innerHTML='';$('home').textContent='';$('bars').innerHTML='';return}
+  const T=tests(k), nk=nextKey(k), сушка=k.сушка||{};
+  $('content').innerHTML=`
+    <section class="glass hero"><div class="reel" style="--c:${color(k.имя)};width:58px;height:58px;border-width:9px"></div>
+      <div><h3>${esc(k.имя)}</h3><p>${esc(k.материал)}${сушка.температура?` · перед калибровкой просушить: ${esc(сушка.температура)} °C, ${esc(сушка.часы)} ч`:''}</p></div><span class="sp"></span>
+      <div class="meter"><b>${k.готово===k.всего?'Откалибрована':'Готово '+k.готово+' из '+k.всего}</b><i style="--w:${k.готово/k.всего*100}%"></i></div></section>
+    <section class="chain" style="margin-top:16px">${T.map(t=>{const v=k.значения[t.ключ];return `<button class="glass step${t.ключ===tst?' on':''}" data-k="${esc(t.ключ)}">
+      ${v?`<span class="st ${esc(v.статус)}" title="${esc(v.статус)}"></span>`:(t.ключ===nk?'<span class="next">дальше</span>':'<span class="st"></span>')}
+      <div class="n">тест ${t.номер}</div><div class="t">${esc(t.название)}</div>
+      <div class="v">${v?esc(v.текст):'—'} <small>${v&&v.статус!=='ошибка'?esc(t.единица):''}</small></div></button>`}).join('')}</section>
+    <section class="glass work" style="margin-top:16px" id="work"></section>`;
+  document.querySelectorAll('.step').forEach(b=>b.onclick=()=>smooth(()=>{tst=b.dataset.k;draft=null;renderAll()}));
+  $('preset').innerHTML='<tr><th></th><th>заводское</th><th>твоё</th></tr>'+T.map(t=>{const f=t.поля[0];
+    return `<tr><td>${esc(t.название)}</td><td>${esc(k.база_поля[f]??'—')}</td><td><b>${esc(k.поля[f]??'—')}</b></td></tr>`}).join('');
+  $('home').textContent=(k.дом==='пользовательский'
+    ?'Эта катушка заведена до плагина: после замера Orca нужно перезапустить.'
+    :'Orca подхватывает изменения сразу, без перезапуска.')+' Замеры сделаны на сопле '+S.сопло+'.';
+  renderNozzles(k,T);
+  const mv=S.катушки.filter(x=>x.поля.filament_max_volumetric_speed).map(x=>[x,parseFloat(x.поля.filament_max_volumetric_speed)]).sort((a,b)=>b[1]-a[1]);
+  const mx=Math.max(25,...mv.map(x=>x[1]));
+  $('bars').innerHTML=mv.map(([x,v])=>`<div class="bar${x===k?' me':''}"><span title="${esc(x.имя)}">${esc(x.имя)}</span><span class="trk"><i style="width:${v/mx*100}%"></i></span><span>${v.toFixed(1)}</span></div>`).join('')||'<div class="note">Пока нет замеров.</div>';
+  renderWork(); diag();
+}
+
+/* ── другие сопла: оценка по замерам ── */
+function renderNozzles(k,T){
+  const ns=Object.keys(S.множители||{}).sort();
+  $('nozzleCard').style.display=ns.length?'':'none'; if(!ns.length)return;
+  // Показываем только то, что от сопла зависит и уже измерено.
+  const rows=T.filter(t=>ns.some(n=>(S.множители[n]||{})[t.поля[0]]!=null)&&k.поля[t.поля[0]]!=null);
+  $('nozzles').innerHTML=rows.length?'<tr><th></th>'+ns.map(n=>`<th>${esc(n)}</th>`).join('')+'</tr>'
+    +rows.map(t=>`<tr><td>${esc(t.название)}</td>${ns.map(n=>`<td>${esc((k.сопла[n]||{})[t.поля[0]]??'—')}</td>`).join('')}</tr>`).join(''):'';
+  $('nozzleNote').textContent=rows.length
+    ?'Это оценка, а не замер. Остальные значения на этих соплах такие же, как на '+S.сопло+'. Orca сама берёт нужный вариант, когда меняешь сопло.'
+    :'Появятся после тестов «Pressure Advance» и «Макс. расход».';
+  $('nozzleBtn').innerHTML=k.варианты_есть?'':'<button class="btn" id="mkNozzles">Создать пресеты под сопла</button>';
+  if($('mkNozzles'))$('mkNozzles').onclick=async()=>done(await send('сопла',{катушки:[k.имя]}));
+}
+
+/* ── рабочая карточка: печать → смотрим → замер ── */
+function range(a,b,step){const out=[],n=Math.round((b-a)/step);for(let i=0;i<=Math.abs(n);i++)out.push(+(a+i*step*Math.sign(n||1)).toFixed(4));return out}
+function renderWork(){
+  const k=spool(), t=test(); if(!k||!t) return;
+  const p=t.параметры||{}, v=k.значения[t.ключ], prev=v&&v.замер;
+  const canRepeat=t.ввод==='сдвиг'&&prev!=null, плита=t.режим==='плита', was=loaded[sel+'|'+tst];
+  let input='';
+  if(t.ввод==='прямое'&&p.шаг){ const dec=Math.abs(p.шаг)<0.01?3:(Math.abs(p.шаг)<1?2:0);
+    input=`<div class="pick">${range(p.старт,p.конец,Math.abs(p.шаг)).map(x=>`<button data-v="${x}">${fmt(x,dec)}</button>`).join('')}</div>
+      <div class="row"><span class="note" style="margin:0">или своё число</span><input type="number" id="num" step="${Math.abs(p.шаг)/(dec?5:1)}"></div>`;
+  } else if(t.ввод==='сдвиг'){
+    input=`<div class="pick">${range(-p.предел,p.предел,p.шаг).map(x=>`<button data-v="${x}">${x>0?'+':x<0?'−':''}${Math.abs(x).toFixed(2)}</button>`).join('')}</div>`
+      +(canRepeat?`<label class="chk"><input type="checkbox" id="rep" ${repeat?'checked':''}><span>Это повторная печать: поправка прибавится к уже найденному потоку. Сними галочку, если исправляешь прошлый ввод.</span></label>`:'');
+  } else {
+    const max=t.ввод==='высота_непрерывно'?Math.ceil((p.конец-p.старт)/p.шаг_на_мм)+2:t.ввод==='таблица'?p.таблица[p.таблица.length-1][0]:0;
+    input=`<div class="row"><input type="number" id="num" step="${t.ввод==='размер'?0.01:0.1}" placeholder="${t.ввод==='размер'?'100.03':'0.0'}"><span class="note" style="margin:0">мм</span>
+      ${max?`<input type="range" id="rng" min="0" max="${max}" step="0.1" value="0">`:''}</div>`;
+  }
+  const печать=плита
+    ?`<p>Плита уже настроена под этот пластик. Она откроется во вкладке «Подготовка» — там нажми «Нарезать», потом «Печать».</p>`
+    :`<p>Запусти тест отката из меню калибровки Orca с выбранным филаментом этой катушки.</p><ol>${t.шаги.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`;
+  $('work').innerHTML=`
+    <h4>${esc(t.название)}</h4>
+    <div class="stage"><div class="num">1</div><div><h5>Печать${t.время?` <span class="note">· ${esc(t.время)}</span>`:''}</h5>${печать}
+      <div class="btns">${плита?`<button class="btn ${v?'':'pri'}" id="open">Загрузить плиту</button>`:''}
+        <span class="done" id="was">${was?'Плита загружена — жду печать':''}</span></div></div></div>
+    <div class="stage"><div class="num">2</div><div><h5>Смотрим</h5><p>${esc(t.смотреть||t.вопрос)}</p>
+      <details class="note"><summary>Подробнее</summary>${esc(t.подсказка)}</details>
+      ${t.не_выверено?'<p style="color:var(--warn)">Шкала этого теста ещё не выверена на живой печати.</p>':''}</div></div>
+    <div class="stage"><div class="num">3</div><div><h5>${esc(t.вопрос)}</h5>${input}
+      <div class="calc" id="calc"><div class="big" id="res">${v?esc(v.текст)+' '+(v.статус!=='ошибка'?esc(t.единица):''):'—'}</div>
+        <div class="why" id="why">${v?esc(v.пояснение||''):'пока стоит заводское значение'}</div></div>
+      <div class="btns"><button class="btn pri" id="save" disabled>Сохранить</button>
+        ${v?'<button class="btn" id="clear">Стереть замер</button>':''}</div></div></div>`;
+  const setDraft=(x,from)=>{draft=(x===''||x==null||isNaN(x))?null:+x;
+    document.querySelectorAll('#work .pick button').forEach(b=>b.classList.toggle('on',draft!=null&&Math.abs(+b.dataset.v-draft)<1e-9));
+    const n=$('num'), r=$('rng'); if(n&&from!=='num')n.value=draft??''; if(r&&from!=='rng'&&draft!=null)r.value=draft; preview()};
+  document.querySelectorAll('#work .pick button').forEach(b=>b.onclick=()=>setDraft(b.dataset.v));
+  if($('num')){$('num').oninput=e=>setDraft(e.target.value,'num');$('num').onkeydown=e=>{if(e.key==='Enter')save()}}
+  if($('rng'))$('rng').oninput=e=>setDraft(e.target.value,'rng');
+  if($('rep'))$('rep').onchange=e=>{repeat=e.target.checked;preview()};
+  $('save').onclick=save;
+  if($('clear'))$('clear').onclick=async()=>done(await send('стереть',{катушка:sel,тест:tst}));
+  if($('open'))$('open').onclick=async()=>{const key=sel+'|'+tst, r=await send('плита',{катушка:sel,тест:tst,открыть:true});
+    if(!r.ок)return fail(r);
+    if(r.открыто===true){loaded[key]=true; if($('was'))$('was').textContent='Плита загружена — жду печать'}
+    else banner('Не получилось загрузить плиту в окно Orca'+(r.открыто?': '+r.открыто:'')+'. Открой файл через «Файл → Открыть проект»: '+r.путь,'warn')};
+  if(draft!=null) setDraft(draft);
+}
+let pv=0;
+function preview(){
+  clearTimeout(preview.h); const my=++pv;
+  if(draft==null){$('save').disabled=true;return}
+  preview.h=setTimeout(async()=>{
+    const r=await send('прикинуть',{катушка:sel,тест:tst,замер:draft,повтор:repeat});
+    if(my!==pv||!$('calc'))return; const t=test();
+    const bad=!r.ок||r.ошибка; $('calc').classList.toggle('err',!!bad);
+    $('res').textContent=bad?(r.ошибка||'ошибка'):r.текст+' '+t.единица; $('why').textContent=bad?'':r.пояснение;
+    $('save').disabled=!!bad;
+  },90);
+}
+async function save(){
+  if(draft==null||$('save').disabled)return;
+  const key=sel+'|'+tst; const r=await send('внести',{катушка:sel,тест:tst,замер:draft,повтор:repeat});
+  if(r.ок)delete loaded[key];
+  done(r,true);
+}
+function done(r,advance){
+  if(!r.ок)return fail(r);
+  S=r.состояние; draft=null; repeat=true;
+  const p=r.пресет||{}; toast(p.сообщение||'Готово');
+  if(p.катушка)sel=p.катушка;
+  if(p.дом==='пользовательский')banner('Сохранено. Эта катушка заведена до плагина — перезапусти Orca, прежде чем печатать следующий тест.','warn');
+  else if(p.перечитано===true)banner('Сохранено. Orca уже видит новое значение.');
+  else if(p.перечитано)banner('Сохранено, но Orca не перечитала пресет: '+p.перечитано+' Перезапусти Orca.','warn');
+  else $('banner').classList.remove('show');
+  if(advance){const k=spool(), n=k&&nextKey(k); if(n)tst=n}
+  smooth(renderAll);
+}
+
+/* ── что выбрано в Orca ── */
+async function check(){
+  const r=await send('выбор');
+  if(!r.ок){$('check').innerHTML=`<div class="note">${esc(r.ошибка||'Недоступно')}</div>`;return}
+  $('check').innerHTML=`<div class="note" style="margin:0 0 6px">${esc(r.выбор.принтер||'')}<br>${esc(r.выбор.процесс||'')}</div>`
+    +(r.замечания.map(m=>`<div class="msg ${esc(m.уровень)}">${esc(m.текст)}</div>`).join('')||'<div class="note">Замечаний нет.</div>');
+}
+
+/* ── новая катушка ── */
+$('add').onclick=()=>{ if(!S)return;
+  $('nMat').innerHTML=(S.порядок||Object.keys(S.материалы)).map(m=>`<option>${esc(m)}</option>`).join('');
+  $('vendors').innerHTML=S.производители.map(v=>`<option value="${esc(v)}">`).join('');
+  $('nVendor').value='';$('nName').value='';$('nPreview').textContent='';$('nPreview').style.color='';$('veil').classList.add('show');$('nVendor').focus()};
+const nPrev=()=>{$('nPreview').style.color='';$('nPreview').textContent=($('nVendor').value||$('nName').value)?'В Orca пластик будет называться «'+($('nVendor').value+' '+$('nName').value).trim()+'»':''};
+$('nVendor').oninput=$('nName').oninput=nPrev;
+$('nCancel').onclick=()=>$('veil').classList.remove('show');
+$('veil').onclick=e=>{if(e.target===$('veil'))$('veil').classList.remove('show')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('veil').classList.remove('show')});
+$('dlg').onsubmit=async e=>{e.preventDefault();
+  const r=await send('новая',{материал:$('nMat').value,производитель:$('nVendor').value,название:$('nName').value});
+  if(!r.ок){$('nPreview').textContent=r.ошибка;$('nPreview').style.color='var(--bad)';return}
+  $('veil').classList.remove('show');tst=null;done(r)};
+
+/* ── раздел «Принтер» ── */
+function diag(){
+  $('diagText').textContent=JSON.stringify({хост:hostInfo,пути:S&&S.пути,базы_известны:S&&S.базы_известны,беды:S&&S.беды,ошибки:log.slice(0,3)},null,1);
+}
+
+(async()=>{
+  applyTheme();
+  const r=await send('состояние');
+  if(!r.ок){$('content').innerHTML=`<div class="glass empty">${esc(r.ошибка)}<pre>${esc(r.след||'')}</pre></div>`;return}
+  S=r.состояние; hostInfo=r.хост||{};
+  if(THEMES.includes((S.настройки||{}).тема)){theme=S.настройки.тема;applyTheme()}
+
+  renderAll(); check();
+})();
+</script>
+</body>
+</html>
