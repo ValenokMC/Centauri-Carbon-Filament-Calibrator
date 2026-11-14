@@ -76,7 +76,9 @@ body h2{font:600 12px/1.3 var(--text);text-transform:uppercase;letter-spacing:.0
 .meter b{font:650 15px var(--display)}
 .meter i{display:block;height:7px;border-radius:9px;background:var(--card2);margin-top:6px;overflow:hidden}
 .meter i::after{content:"";display:block;height:100%;width:var(--w);border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
-.chain{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.chain{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.optional-step{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.optional-step .t{margin:2px 0 0}
 .step{padding:12px 13px;border-radius:17px;text-align:left;position:relative;transition:transform .15s,border-color .15s}
 .step:hover{transform:translateY(-2px)}
 .step.on{background:var(--card2);border-color:var(--acc)}
@@ -213,7 +215,8 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
 <div class="veil" id="veil"><form class="glass dlg" id="dlg">
   <h4>Новая катушка</h4>
   <label>Материал<select id="nMat"></select></label>
-  <p class="note">База новой катушки — профиль, выбранный в первом слоте филамента Orca.</p>
+  <label>Базовый профиль Orca<select id="nBase" required></select></label>
+  <p class="note" id="nBaseInfo"></p>
   <label>Производитель<input type="text" id="nVendor" list="vendors" placeholder="ELEGOO" required><datalist id="vendors"></datalist></label>
   <label>Название с этикетки<input type="text" id="nName" placeholder="Matte PLA" required></label>
   <div class="note" id="nPreview"></div>
@@ -275,7 +278,7 @@ $('bannerX').onclick=()=>$('banner').classList.remove('show');
 const spool=()=>S&&S.катушки.find(k=>k.имя===sel);
 const tests=k=>S.материалы[k.материал].тесты;
 const test=()=>{const k=spool();return k&&tests(k).find(t=>t.ключ===tst)};
-const nextKey=k=>(tests(k).find(t=>!k.значения[t.ключ])||{}).ключ;
+const nextKey=k=>tests(k).find(t=>!t.необязательный&&(!k.значения[t.ключ]||k.значения[t.ключ].статус==='ошибка'))?.ключ;
 const fmt=(v,d)=>Number(v).toFixed(d);
 function fail(r){ if(r.след) log.unshift(r.след); banner(r.ошибка||'Не получилось','bad'); diag() }
 
@@ -296,12 +299,29 @@ function renderAll(){
   $('content').innerHTML=`
     <section class="glass hero"><div class="reel" style="--c:${color(k.имя)};width:58px;height:58px;border-width:9px"></div>
       <div><h3>${esc(k.имя)}</h3><p>${esc(k.материал)}${сушка.температура?` · перед калибровкой просушить: ${esc(сушка.температура)} °C, ${esc(сушка.часы)} ч`:''}</p></div><span class="sp"></span>
-      <div class="meter"><b>${k.готово===k.всего?'Откалибрована':'Готово '+k.готово+' из '+k.всего}</b><i style="--w:${k.готово/k.всего*100}%"></i></div></section>
-    <section class="chain" style="margin-top:16px">${T.map(t=>{const v=k.значения[t.ключ];return `<button class="glass step${t.ключ===tst?' on':''}" data-k="${esc(t.ключ)}">
+      <button class="btn" id="removeSpool">Удалить катушку</button><div class="meter"><b>${k.готово===k.всего?'Откалибрована':'Готово '+k.готово+' из '+k.всего}</b><i style="--w:${k.готово/k.всего*100}%"></i></div></section>
+    <div class="glass card" id="confirmRemove" hidden>
+      <p>Удалить «${esc(k.имя)}» из панели? Замеры и пресеты сохранятся в архиве.</p>
+      <button class="btn" id="doRemove">Удалить</button>
+      <button class="btn" id="cancelRemove">Отмена</button>
+    </div>
+    <section class="chain" style="margin-top:16px">${T.filter(t=>!t.необязательный).map(t=>{const v=k.значения[t.ключ];return `<button class="glass step${t.ключ===tst?' on':''}" data-k="${esc(t.ключ)}">
       ${v?`<span class="st ${esc(v.статус)}" title="${esc(v.статус)}"></span>`:(t.ключ===nk?'<span class="next">дальше</span>':'<span class="st"></span>')}
       <div class="n">тест ${t.номер}</div><div class="t">${esc(t.название)}</div>
       <div class="v">${v?esc(v.текст):'—'} <small>${v&&v.статус!=='ошибка'?esc(t.единица):''}</small></div></button>`}).join('')}</section>
+    ${T.filter(t=>t.необязательный).map(t=>{const v=k.значения[t.ключ];return `<button class="glass step optional-step${t.ключ===tst?' on':''}" data-k="${esc(t.ключ)}" aria-pressed="${t.ключ===tst}">
+      <span><span class="n">Необязательный тест</span><span class="t" style="display:block">${esc(t.название)}</span></span>
+      <span class="v">${v?esc(v.текст):'—'} <small>${v&&v.статус!=='ошибка'?esc(t.единица):''}</small></span></button>`}).join('')}
     <section class="glass work" style="margin-top:16px" id="work"></section>`;
+  $('removeSpool').onclick=()=>{$('confirmRemove').hidden=false};
+  $('cancelRemove').onclick=()=>{$('confirmRemove').hidden=true};
+  $('doRemove').onclick=async e=>{
+    const button=e.currentTarget;
+    button.disabled=true;
+    const r=await send('убрать',{катушка:k.имя});
+    button.disabled=false;
+    if(r.ок){sel=null;tst=null;draft=null} done(r);
+  };
   document.querySelectorAll('.step').forEach(b=>b.onclick=()=>smooth(()=>{tst=b.dataset.k;draft=null;renderAll()}));
   $('preset').innerHTML='<tr><th></th><th>заводское</th><th>твоё</th></tr>'+T.map(t=>{const f=t.поля[0];
     return `<tr><td>${esc(t.название)}</td><td>${esc(k.база_поля[f]??'—')}</td><td><b>${esc(k.поля[f]??'—')}</b></td></tr>`}).join('');
@@ -324,7 +344,7 @@ function renderNozzles(k,T){
   $('nozzles').innerHTML=rows.length?'<tr><th></th>'+ns.map(n=>`<th>${esc(n)}</th>`).join('')+'</tr>'
     +rows.map(t=>`<tr><td>${esc(t.название)}</td>${ns.map(n=>`<td>${esc((k.сопла[n]||{})[t.поля[0]]??'—')}</td>`).join('')}</tr>`).join(''):'';
   $('nozzleNote').textContent=rows.length
-    ?'Это оценка, а не замер. Остальные значения на этих соплах такие же, как на '+S.сопло+'. Orca сама берёт нужный вариант, когда меняешь сопло.'
+    ?'Это оценка, а не замер. Остальные значения перенесены с сопла '+S.сопло+'. После смены сопла проверь выбранный профиль пластика в Orca.'
     :'Появятся после тестов «Pressure Advance» и «Макс. расход».';
   $('nozzleBtn').innerHTML=k.варианты_есть?'':'<button class="btn" id="mkNozzles">Создать пресеты под сопла</button>';
   if($('mkNozzles'))$('mkNozzles').onclick=async()=>done(await send('сопла',{катушки:[k.имя]}));
@@ -350,12 +370,15 @@ function renderWork(){
   }
   const печать=плита
     ?`<p>Плита уже настроена под этот пластик. Она откроется во вкладке «Подготовка» — там нажми «Нарезать», потом «Печать».</p>`
-    :`<p>Запусти тест отката из меню калибровки Orca с выбранным филаментом этой катушки.</p><ol>${t.шаги.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`;
+    :`<p>Открой в Orca <b>«Калибровка → Откат»</b> и введи значения для этой катушки.</p>
+      <p>Начало: <b>${esc(p.старт?.toLocaleString('ru-RU')??'—')} мм</b> · Конец: <b>${esc(p.конец?.toLocaleString('ru-RU')??'—')} мм</b> · Шаг: <b>${esc(p.шаг?.toLocaleString('ru-RU')??'—')} мм</b></p>
+      <p>Нарежь башню в Orca. После печати введи ниже высоту первого участка без нитей.</p>`;
   $('work').innerHTML=`
     <h4>${esc(t.название)}</h4>
     <div class="stage"><div class="num">1</div><div><h5>Печать${t.время?` <span class="note">· ${esc(t.время)}</span>`:''}</h5>${печать}
-      <div class="btns">${плита?`<button class="btn ${v?'':'pri'}" id="open">Загрузить плиту</button>`:''}
-        <span class="done" id="was">${was?'Плита загружена — жду печать':''}</span></div></div></div>
+      <div class="btns">${плита?`<button class="btn ${v?'':'pri'}" id="open">Загрузить плиту</button>`:'<button class="btn" id="selectSpool">Выбрать катушку в Orca</button>'}
+        <span class="done" id="was">${was?'Плита загружена':''}</span></div>
+    </div></div>
     <div class="stage"><div class="num">2</div><div><h5>Смотрим</h5><p>${esc(t.смотреть||t.вопрос)}</p>
       <details class="note"><summary>Подробнее</summary>${esc(t.подсказка)}</details>
       ${t.не_выверено?'<p style="color:var(--warn)">Шкала этого теста ещё не выверена на живой печати.</p>':''}</div></div>
@@ -373,9 +396,17 @@ function renderWork(){
   if($('rep'))$('rep').onchange=e=>{repeat=e.target.checked;preview()};
   $('save').onclick=save;
   if($('clear'))$('clear').onclick=async()=>done(await send('стереть',{катушка:sel,тест:tst}));
+  if($('selectSpool'))$('selectSpool').onclick=async e=>{
+    const button=e.currentTarget, имя=sel;
+    button.disabled=true;
+    const r=await send('выбрать_катушку',{катушка:имя});
+    button.disabled=false;
+    if(!r.ок)return fail(r);
+    if(sel===имя&&tst===t.ключ&&$('was'))$('was').textContent='Катушка выбрана в первом слоте.';
+  };
   if($('open'))$('open').onclick=async()=>{const key=sel+'|'+tst, r=await send('плита',{катушка:sel,тест:tst,открыть:true});
     if(!r.ок)return fail(r);
-    if(r.открыто===true){loaded[key]=true; if($('was'))$('was').textContent='Плита загружена — жду печать'}
+    if(r.открыто===true){loaded[key]=true; if($('was'))$('was').textContent='Плита загружена'}
     else banner('Не получилось загрузить плиту в окно Orca'+(r.открыто?': '+r.открыто:'')+'. Открой файл через «Файл → Открыть проект»: '+r.путь,'warn')};
   if(draft!=null) setDraft(draft);
 }
@@ -406,7 +437,7 @@ function done(r,advance){
   else if(p.перечитано===true)banner('Сохранено. Orca уже видит новое значение.');
   else if(p.перечитано)banner('Сохранено, но Orca не перечитала пресет: '+p.перечитано+' Перезапусти Orca.','warn');
   else $('banner').classList.remove('show');
-  if(advance){const k=spool(), n=k&&nextKey(k); if(n)tst=n}
+  if(advance&&!test()?.необязательный){const k=spool(), n=k&&nextKey(k); if(n)tst=n}
   smooth(renderAll);
 }
 
@@ -419,19 +450,33 @@ async function check(){
 }
 
 /* ── новая катушка ── */
+let baseRequest=0;
+async function loadBases(){
+  const request=++baseRequest, material=$('nMat').value;
+  $('nBase').innerHTML='';
+  $('dlg').querySelector('[type=submit]').disabled=true;
+  $('nBaseInfo').textContent='Загрузка профилей…';
+  const r=await send('базы',{материал:material});
+  if(request!==baseRequest)return;
+  if(!r.ок){$('nBaseInfo').textContent=r.ошибка;return}
+  $('nBase').innerHTML=r.базы.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
+  $('dlg').querySelector('[type=submit]').disabled=!r.базы.length;
+  $('nBaseInfo').textContent=r.базы.length?'Профиль выбран автоматически. При необходимости его можно изменить.':'Нет совместимых профилей этого материала. Добавь такой профиль в Orca.';
+}
+$('nMat').onchange=loadBases;
 $('add').onclick=()=>{ if(!S)return;
   $('nMat').innerHTML=(S.порядок||Object.keys(S.материалы)).map(m=>`<option>${esc(m)}</option>`).join('');
   $('vendors').innerHTML=S.производители.map(v=>`<option value="${esc(v)}">`).join('');
-  $('nVendor').value='';$('nName').value='';$('nPreview').textContent='';$('nPreview').style.color='';$('veil').classList.add('show');$('nVendor').focus()};
+  $('nVendor').value='';$('nName').value='';$('nPreview').textContent='';$('nPreview').style.color='';$('veil').classList.add('show');$('nVendor').focus();loadBases()};
 const nPrev=()=>{$('nPreview').style.color='';$('nPreview').textContent=($('nVendor').value||$('nName').value)?'В Orca пластик будет называться «'+($('nVendor').value+' '+$('nName').value).trim()+'»':''};
 $('nVendor').oninput=$('nName').oninput=nPrev;
 $('nCancel').onclick=()=>$('veil').classList.remove('show');
 $('veil').onclick=e=>{if(e.target===$('veil'))$('veil').classList.remove('show')};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('veil').classList.remove('show')});
 $('dlg').onsubmit=async e=>{e.preventDefault();
-  const r=await send('новая',{материал:$('nMat').value,производитель:$('nVendor').value,название:$('nName').value});
+  const r=await send('новая',{материал:$('nMat').value,база:$('nBase').value,производитель:$('nVendor').value,название:$('nName').value});
   if(!r.ок){$('nPreview').textContent=r.ошибка;$('nPreview').style.color='var(--bad)';return}
-  $('veil').classList.remove('show');tst=null;done(r)};
+  $('veil').classList.remove('show');sel=r.пресет.катушка;tst=null;done(r)};
 
 let hostInfo={};
 function diag(){

@@ -15,6 +15,7 @@ def build(output):
     source = source.replace('PAGE = "@@PAGE@@"', 'PAGE = ' + repr(page))
     source = source.replace('DEFAULT_SCALES = None  # @@ШКАЛЫ@@', 'DEFAULT_SCALES = ' + repr(scales))
     modules = {'МОДЕЛИ': 'модели.py', 'ПОТОК': 'native_flow.py', 'БАШНИ': 'native_towers.py'}
+    modules['ОТКАТ'] = 'retraction_gcode.py'
     lines = []
     for line in source.splitlines():
         marker = line.rsplit('# @@', 1)[-1].removesuffix('@@')
