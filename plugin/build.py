@@ -11,8 +11,12 @@ ROOT = Path(__file__).resolve().parent
 def build(output):
     source = (ROOT / 'kalibrovka.py').read_text(encoding='utf-8')
     page = (ROOT / 'страница.html').read_text(encoding='utf-8')
+    icon = (ROOT / 'icon.svg').read_text(encoding='utf-8').strip()
+    tab_icon = (ROOT / 'tab-icon.svg').read_text(encoding='utf-8').strip()
+    page = page.replace('<!-- @@ICON@@ -->', icon)
     scales = json.loads((ROOT / 'шкалы.json').read_text(encoding='utf-8'))
     source = source.replace('PAGE = "@@PAGE@@"', 'PAGE = ' + repr(page))
+    source = source.replace('TAB_ICON = "@@TAB_ICON@@"', 'TAB_ICON = ' + repr(tab_icon))
     source = source.replace('DEFAULT_SCALES = None  # @@ШКАЛЫ@@', 'DEFAULT_SCALES = ' + repr(scales))
     modules = {'МОДЕЛИ': 'модели.py', 'ПОТОК': 'native_flow.py', 'БАШНИ': 'native_towers.py'}
     modules['ОТКАТ'] = 'retraction_gcode.py'

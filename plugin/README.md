@@ -1,4 +1,6 @@
-# Калибровка филамента для OrcaSlicer
+# Filament Lab
+
+Панель калибровки филамента для OrcaSlicer. Название репозитория для выпуска — OrcaSlicer Calibration Plugins.
 
 Ветка плагина для OrcaSlicer 2.5, предварительная сборка для Windows.
 

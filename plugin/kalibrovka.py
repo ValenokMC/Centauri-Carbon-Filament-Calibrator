@@ -3,7 +3,7 @@
 # dependencies = ["trimesh>=4.7", "numpy", "shapely", "mapbox-earcut", "DracoPy", "scipy"]
 #
 # [tool.orcaslicer.plugin]
-# name = "Калибровка пластика"
+# name = "Filament Lab"
 # description = "Калибровочные плиты и пресеты филамента для OrcaSlicer."
 # version = "0.8.0"
 # ///
@@ -67,6 +67,7 @@ _ORCA = str(Path(ЗДЕСЬ).parent.parent) if orca is not None else str(Path.ho
 ПРЕСЕТЫ = os.path.join(_ORCA, 'user')
 
 PAGE = "@@PAGE@@"
+TAB_ICON = "@@TAB_ICON@@"
 DEFAULT_SCALES = None  # @@ШКАЛЫ@@
 
 НАБОР = 'kalibrovka'
@@ -572,16 +573,25 @@ def _тесты(описание):
 
 def _тесты_катушки(описание, версия):
     тесты = _тесты(описание)
-    if версия != 1:
-        return тесты
     for индекс, тест in enumerate(тесты):
-        if тест['ключ'] == 'pa' and тест['ввод'] == 'прямое':
+        if тест['ключ'] != 'pa':
+            continue
+        if версия == 1 and тест['ввод'] == 'прямое':
             параметры = dict(тест['параметры'])
             параметры['шаг_на_мм'] = (параметры['конец'] - параметры['старт']) / ВЫСОТА_PA
             параметры['запас'] = 1
-            тесты[индекс] = dict(тест, режим='плита', ввод='высота_непрерывно',
-                                  параметры=параметры, файл='3_PA.3mf',
-                                  вопрос='Высота участка с лучшими углами, мм')
+            тест = dict(тест, режим='плита', ввод='высота_непрерывно',
+                        параметры=параметры, файл='3_PA.3mf')
+        if тест['ввод'] == 'высота_непрерывно':
+            параметры = тест['параметры']
+            тесты[индекс] = dict(
+                тест, вопрос='Высота участка с лучшими углами, мм',
+                смотреть='Найди участок башни, где углы чёткие, без вздутий и скруглений. '
+                         'Измерь высоту этого участка от стола и введи её ниже.',
+                подсказка='PA начинается с {:g} и растёт на {:g} за каждый миллиметр высоты '
+                          'до {:g} на высоте {:g} мм. Введи высоту в миллиметрах.'.format(
+                              параметры['старт'], параметры['шаг_на_мм'],
+                              параметры['конец'], ВЫСОТА_PA))
     return тесты
 
 
@@ -969,7 +979,7 @@ def плита(имя, ключ, активные):
 def _имя_катушки(пресет):
     префикс = '_local/' + НАБОР + '/'
     if пресет.startswith(префикс):
-        return пресет[len(префикс):]
+        пресет = пресет[len(префикс):]
     return re.sub(r'\([^()]*\.3mf\)$', '', пресет)
 
 
@@ -1142,10 +1152,13 @@ def selection():
     """Что сейчас выбрано в Orca — только имена и пара флагов."""
     bundle = orca.host.preset_bundle()
     printer = bundle.current_printer_preset()
+    филаменты = list(bundle.current_filament_preset_names())
+    первый = филаменты[0] if филаменты else ''
+    катушка = re.sub(r' @\d+(?:\.\d+)? nozzle$', '', _имя_катушки(первый or ''))
     return {
         'принтер': printer.name, 'принтер_системный': bool(printer.is_system),
         'процесс': bundle.current_process_preset().name,
-        'филаменты': list(bundle.current_filament_preset_names()),
+        'филаменты': филаменты, 'катушка_первого_слота': катушка,
         'несовместимые': [p.name for p in bundle.current_filament_presets()
                           if p is not None and not p.is_compatible],
     }
@@ -1390,7 +1403,9 @@ def handle(message):
                     _host['snapshot'] = 'не снят: %s: %s' % (type(e).__name__, e)
             reply = обработать(message)
             if reply.get('ок'):
-                reply['состояние']['принтер'] = selection()['принтер']
+                выбор = selection()
+                reply['состояние']['принтер'] = выбор['принтер']
+                reply['выбор'] = выбор
             reply['хост'] = host_info()
         elif action == 'плита':
             if message.get('открыть'):
@@ -1434,12 +1449,17 @@ if orca is not None:
 
     class SpoolsPage(orca.pages.PagesPluginCapabilityBase):
         def get_name(self):
-            return "Калибровка"
+            return "Filament Lab"
 
         def get_icon(self):
-            # Значок кладёт install.py: в папке данных плагин читает без вопросов.
-            path = _путь('значок.svg')
-            return path if os.path.exists(path) else ''
+            path = Path(_путь('filament-lab-tab.svg'))
+            try:
+                if not path.is_file():
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(TAB_ICON, encoding='utf-8')
+                return str(path)
+            except OSError:
+                return ''
 
         def get_ui(self):
             return PAGE

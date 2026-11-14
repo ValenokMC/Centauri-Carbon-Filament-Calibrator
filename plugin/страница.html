@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Калибровка пластика</title>
+<title>Filament Lab</title>
 <style>
 /* Orca подмешивает в страницу свою тему: правила для голых тегов body, button, input,
    select, table. Они перебивают наши правила той же силы, поэтому всё, что касается
@@ -40,12 +40,13 @@ html button,html input,html select{font:inherit}
 .b3{width:460px;height:460px;background:oklch(78% .15 75);left:32%;bottom:-300px;opacity:calc(var(--blob)*.5)}
 
 .app{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px;display:grid;gap:16px;
-  grid-template-columns:280px minmax(0,1fr) 320px;grid-template-areas:"top top top" "side main right" "foot foot foot"}
+  grid-template-columns:clamp(300px,23vw,340px) minmax(0,1fr) 320px;grid-template-areas:"top top top" "side main right" "foot foot foot"}
 .glass{background:var(--card);border:1px solid var(--line);border-radius:22px;
   backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);box-shadow:var(--shadow)}
 header{grid-area:top;display:flex;align-items:center;gap:12px;padding:12px 18px;flex-wrap:wrap}
 header h1{font:650 19px/1.2 var(--display);margin:0;color:var(--fg);letter-spacing:-.01em}
-.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;color:var(--on-acc);font:800 16px var(--display)}
+.logo{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center}
+.logo svg{display:block;width:100%;height:100%}
 .sp{flex:1}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font-size:13px;color:var(--muted);white-space:nowrap}
 header button.chip{color:var(--muted)}
@@ -58,9 +59,33 @@ body h2{font:600 12px/1.3 var(--text);text-transform:uppercase;letter-spacing:.0
 
 /* список катушек */
 .spool{display:flex;gap:11px;align-items:center;width:100%;text-align:left;padding:10px 11px;border-radius:15px;border:1px solid transparent;background:none}
-.spool:hover{background:var(--card2)}
-.spool.on{background:var(--card2);border-color:var(--line)}
-.reel{flex:none;width:34px;height:34px;border-radius:50%;border:6px solid var(--c,gray);box-shadow:inset 0 0 0 4px oklch(0% 0 0 / .22)}
+.spool-filter{margin-bottom:9px}
+.spool-filter summary{display:flex;justify-content:space-between;align-items:center;list-style:none;padding:8px 11px;border:1px solid var(--line);border-radius:11px;background:var(--field);font-size:13px}
+.spool-filter summary::-webkit-details-marker{display:none}
+.spool-filter summary::after{content:"";width:6px;height:6px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin-right:3px}
+.spool-filter[open] summary{border-color:var(--acc)}
+.spool-filter[open] summary::after{transform:rotate(225deg)}
+.spool-filter[open] .spool-filter-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:5px;padding:5px;border:1px solid var(--line);border-radius:11px;background:var(--field)}
+.app .spool-filter-options button{min-width:0;padding:5px 3px;overflow-wrap:anywhere;text-align:center;border:1px solid transparent;border-radius:7px;background:none;font-size:12px}
+.spool-filter-options button:first-child{grid-column:1/-1}
+.app .spool-filter-options button:hover,.app .spool-filter-options button:focus-visible,.app .spool-filter-options button[aria-pressed=true]{background:var(--card2)}
+.app .spool-filter-options button[aria-pressed=true]{font-weight:700;border-color:var(--acc)}
+.spool-row{display:grid;grid-template-columns:minmax(0,1fr) 34px;align-items:center;border:1px solid transparent;border-radius:12px}
+.spool-row:hover,.spool-row.on{background:var(--card2)}
+.spool-row.on{border-color:var(--line)}
+.spool-row .spool{display:flex;min-width:0;padding:7px;gap:8px}
+.spool-row .spool b{white-space:normal;overflow-wrap:anywhere}
+.spool-info{min-width:0}
+.material-badge{display:inline-grid;place-items:center;box-sizing:border-box;flex:none;width:76px;height:30px;border-radius:999px;border:3px solid var(--material-color);color:var(--fg);font-size:13px;font-weight:700;line-height:1;text-align:center;white-space:nowrap}
+.hero .material-badge{width:108px;height:45px;border-width:4px;font-size:17px}
+.app .spool-remove{width:30px;height:32px;display:grid;place-items:center;border:0;border-radius:7px;background:none;color:var(--muted)}
+.app .spool-remove:hover,.app .spool-remove:focus-visible{color:var(--bad);background:var(--card)}
+.spool-remove svg{width:15px;height:15px}
+.spool-pages{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:8px}
+.spool-pages span{font-size:12px;color:var(--muted);white-space:nowrap}
+.spool-pages button{padding:3px 9px}
+#removeDialog{margin:auto;color:var(--fg);border:1px solid var(--line);background:var(--card2)}
+#removeDialog::backdrop{background:#080e1aaa}
 .spool b{display:block;font-weight:600;font-size:14.5px;overflow-wrap:anywhere;line-height:1.25}
 .spool small{color:var(--muted);font-size:12.5px}
 .cnt{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
@@ -77,8 +102,19 @@ body h2{font:600 12px/1.3 var(--text);text-transform:uppercase;letter-spacing:.0
 .meter i{display:block;height:7px;border-radius:9px;background:var(--card2);margin-top:6px;overflow:hidden}
 .meter i::after{content:"";display:block;height:100%;width:var(--w);border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .4s}
 .chain{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
-.optional-step{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
-.optional-step .t{margin:2px 0 0}
+.extra-tests{padding:12px 14px;min-width:0}
+.extra-tests summary{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:600;color:var(--muted);list-style:none}
+.extra-tests summary::-webkit-details-marker{display:none}
+.extra-tests summary:hover,.extra-tests[open] summary{color:var(--fg)}
+.extra-items{display:grid;gap:5px;margin-top:8px}
+.app .extra-test{display:grid;grid-template-columns:minmax(0,1fr) auto 12px;align-items:center;gap:10px;width:100%;padding:8px 10px;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--field)}
+.app .extra-test:hover,.app .extra-test[aria-pressed=true]{border-color:var(--acc);background:var(--card2)}
+.extra-test strong,.extra-test small{display:block}
+.extra-test small{color:var(--muted);font-size:12px}
+.extra-value{white-space:nowrap;font-size:14px;font-weight:650}
+.extra-chevron{width:7px;height:7px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+.extra-tests[open] summary .extra-chevron{transform:rotate(225deg)}
+.extra-test .extra-chevron{transform:rotate(-45deg)}
 .step{padding:12px 13px;border-radius:17px;text-align:left;position:relative;transition:transform .15s,border-color .15s}
 .step:hover{transform:translateY(-2px)}
 .step.on{background:var(--card2);border-color:var(--acc)}
@@ -175,7 +211,7 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
 .logrow span{color:var(--muted);display:block;overflow-wrap:anywhere}
 .app .btn.arm{border-color:var(--warn);color:var(--warn)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-@media (max-width:1180px){.app{grid-template-columns:250px minmax(0,1fr);grid-template-areas:"top top" "side main" "right right" "foot foot"}.right{grid-template-columns:1fr 1fr}}
+@media (max-width:1180px){.app{grid-template-columns:clamp(270px,30vw,310px) minmax(0,1fr);grid-template-areas:"top top" "side main" "right right" "foot foot"}.right{grid-template-columns:1fr 1fr}}
 @media (max-width:800px){.app{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "side" "main" "right" "foot";padding:14px}.chain{grid-template-columns:repeat(3,minmax(0,1fr))}.right{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -183,15 +219,28 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
 <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 <div class="app">
   <header class="glass">
-    <div class="logo">К</div><h1 id="title">Калибровка пластика</h1>
+    <div class="logo"><!-- @@ICON@@ --></div><h1 id="title">Filament Lab</h1>
 
     <span class="sp"></span>
     <span class="chip" id="printer"></span>
     <button class="chip" id="theme" title="Сменить тему"></button>
   </header>
 
-  <aside class="glass f"><h2>Катушки</h2><div id="spools"></div>
+  <aside class="glass f"><h2>Катушки</h2>
+    <details id="spoolFilter" class="spool-filter">
+      <summary id="spoolFilterLabel">Все материалы</summary>
+      <div id="spoolFilterOptions" class="spool-filter-options" role="group" aria-label="Фильтр по материалу"></div>
+    </details>
+    <div id="spools"></div><nav id="spoolPages" aria-label="Страницы списка катушек"></nav>
     <button class="spool new" id="add">+ Новая катушка</button></aside>
+  <dialog id="removeDialog" class="glass" aria-labelledby="removeTitle">
+    <form class="dlg" method="dialog">
+      <h4 id="removeTitle">Удалить катушку?</h4>
+      <div id="removeText"></div>
+      <div class="btns"><button class="btn" id="cancelRemove" value="cancel" autofocus>Отмена</button>
+        <button class="btn arm" id="doRemove" type="button">Удалить</button></div>
+    </form>
+  </dialog>
 
   <main>
     <div class="glass banner" id="banner"><span id="bannerText"></span><button id="bannerX" aria-label="Скрыть">×</button></div>
@@ -199,6 +248,10 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
   </main>
 
   <div class="right f">
+    <details class="glass extra-tests" id="extraTests" hidden>
+      <summary>Дополнительные тесты<span class="extra-chevron" aria-hidden="true"></span></summary>
+      <div class="extra-items" id="extraItems"></div>
+    </details>
     <section class="glass card"><h2 style="margin-left:0">Что в пресете</h2>
       <table id="preset"></table><div class="note" id="home"></div></section>
     <section class="glass card" id="nozzleCard"><h2 style="margin-left:0">Другие сопла</h2>
@@ -283,46 +336,138 @@ const fmt=(v,d)=>Number(v).toFixed(d);
 function fail(r){ if(r.след) log.unshift(r.след); banner(r.ошибка||'Не получилось','bad'); diag() }
 
 /* ── список, шапка, дорожка ── */
+const perPage=8;
+let spoolPage=0, spoolMaterial='', removeTarget=null;
+const spoolOrder=new Intl.Collator('ru',{numeric:true,sensitivity:'base'});
+const sortedSpools=()=>[...S.катушки].sort((a,b)=>
+  spoolOrder.compare(a.материал,b.материал)||spoolOrder.compare(a.имя,b.имя));
+let lastOrcaSpool=null;
+function followOrcaSpool(выбор){
+  if(!S||!выбор)return false;
+  const name=выбор.катушка_первого_слота;
+  if(name===lastOrcaSpool)return false;
+  lastOrcaSpool=name;
+  const ordered=sortedSpools();
+  let index=ordered.findIndex(k=>k.имя===name);
+  if(index<0)index=ordered.findIndex(k=>k.имя.replace(/[\/\\:*?"<>|]/g,'_')===name);
+  if(index<0||ordered[index].имя===sel)return false;
+  sel=ordered[index].имя;
+  tst=null;
+  draft=null;
+  spoolMaterial='';
+  spoolPage=Math.floor(index/perPage);
+  return true;
+}
+const materialColors=new Map(Object.entries({
+  PLA:'#55b8f0', PETG:'#24c9ae', 'PETG-CF':'#239c7b', 'PETG-GF':'#8dbb44',
+  ASA:'#f5ad4f', ABS:'#f17875', PA:'#a78bfa', TPU:'#df85c4'
+}));
+const materialBadge=material=>`<span class="material-badge" style="--material-color:${materialColors.get(material)||color(material)}">${esc(material)}</span>`;
+const trashIcon='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5h13m-10 0V3h7v2.5m1.5 0-.8 11h-8.4l-.8-11M8 8.5v5m4-5v5"/></svg>';
+function renderSpools(){
+  if(!S)return;
+  const ordered=sortedSpools();
+  const materials=[...new Set(ordered.map(k=>k.материал))];
+  if(!materials.includes(spoolMaterial))spoolMaterial='';
+  $('spoolFilterLabel').textContent=spoolMaterial||'Все материалы';
+  $('spoolFilterOptions').innerHTML=['',...materials].map(m=>`<button type="button" data-material="${esc(m)}" aria-pressed="${m===spoolMaterial}">${esc(m||'Все материалы')}</button>`).join('');
+  const results=ordered.filter(k=>!spoolMaterial||k.материал===spoolMaterial);
+  const pages=Math.max(1,Math.ceil(results.length/perPage));
+  spoolPage=Math.min(spoolPage,pages-1);
+  const from=spoolPage*perPage;
+  $('spools').innerHTML=results.slice(from,from+perPage).map(k=>`
+    <div class="spool-row${k.имя===sel?' on':''}">
+      <button class="spool" data-n="${esc(k.имя)}" aria-pressed="${k.имя===sel}" title="${esc(k.имя)}">
+        ${materialBadge(k.материал)}
+        <span class="spool-info"><b>${esc(k.имя)}</b>
+        <small class="cnt${k.готово===k.всего?' full':''}">${k.готово===k.всего?'Готово':k.готово+' из '+k.всего}</small></span>
+      </button>
+      <button class="spool-remove" data-n="${esc(k.имя)}" aria-label="Удалить ${esc(k.имя)}" title="Удалить катушку">${trashIcon}</button>
+    </div>`).join('')||`<div class="note" style="padding:8px">${S.катушки.length?'Катушки не найдены.':'Пока ни одной катушки.'}</div>`;
+  $('spoolPages').innerHTML=pages>1?`<div class="spool-pages">
+    <button class="btn" id="pagePrev" aria-label="Предыдущая страница" ${spoolPage===0?'disabled':''}>‹</button>
+    <span>${from+1}–${Math.min(from+perPage,results.length)} из ${results.length}</span>
+    <button class="btn" id="pageNext" aria-label="Следующая страница" ${spoolPage===pages-1?'disabled':''}>›</button>
+  </div>`:'';
+  if($('pagePrev'))$('pagePrev').onclick=()=>{spoolPage--;renderSpools();($('pagePrev').disabled?$('pageNext'):$('pagePrev')).focus()};
+  if($('pageNext'))$('pageNext').onclick=()=>{spoolPage++;renderSpools();($('pageNext').disabled?$('pagePrev'):$('pageNext')).focus()};
+}
+$('spoolFilterOptions').onclick=e=>{
+  const button=e.target.closest('button[data-material]');
+  if(!button)return;
+  spoolMaterial=button.dataset.material;
+  spoolPage=0;
+  $('spoolFilter').open=false;
+  renderSpools();
+  $('spoolFilterLabel').focus();
+};
+document.addEventListener('click',e=>{if(!$('spoolFilter').contains(e.target))$('spoolFilter').open=false});
+$('spoolFilter').addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('spoolFilter').open){
+    $('spoolFilter').open=false;
+    $('spoolFilterLabel').focus();
+  }
+});
+$('spools').onclick=e=>{
+  const button=e.target.closest('button[data-n]');
+  if(!button)return;
+  if(button.classList.contains('spool-remove')){
+    removeTarget=button.dataset.n;
+    $('removeText').textContent=`«${removeTarget}» исчезнет из списка. Замеры и пресеты сохранятся в архиве.`;
+    $('removeDialog').showModal();
+    return;
+  }
+  smooth(()=>{sel=button.dataset.n;tst=null;draft=null;renderAll()});
+};
+$('removeDialog').addEventListener('cancel',e=>{if($('doRemove').disabled)e.preventDefault()});
+$('doRemove').onclick=async()=>{
+  const имя=removeTarget;
+  $('doRemove').disabled=$('cancelRemove').disabled=true;
+  try{
+    const r=await send('убрать',{катушка:имя});
+    $('removeDialog').close();
+    if(r.ок&&sel===имя){sel=null;tst=null;draft=null}
+    done(r);
+  }finally{
+    $('doRemove').disabled=$('cancelRemove').disabled=false;
+  }
+};
 function renderAll(){
   if(!S) return;
   $('printer').textContent=S.принтер||'принтер не задан';
-  if(!sel||!spool()) sel=(S.катушки[0]||{}).имя||null;
+  if(!sel||!spool()) sel=(sortedSpools().find(k=>!spoolMaterial||k.материал===spoolMaterial)||sortedSpools()[0])?.имя??null;
   const k=spool();
   if(k&&(!tst||!test())) tst=nextKey(k)||tests(k)[0].ключ;
-  $('spools').innerHTML=S.катушки.map(x=>`<button class="spool${x.имя===sel?' on':''}" data-n="${esc(x.имя)}">
-    <span class="reel" style="--c:${color(x.имя)}"></span><span><b>${esc(x.имя)}</b><small>${esc(x.материал)}</small></span>
-    <span class="cnt${x.готово===x.всего?' full':''}">${x.готово===x.всего?'готово':x.готово+' из '+x.всего}</span></button>`).join('')
-    ||'<div class="note" style="padding:8px">Пока ни одной катушки.</div>';
-  document.querySelectorAll('#spools .spool').forEach(b=>b.onclick=()=>smooth(()=>{sel=b.dataset.n;tst=null;draft=null;renderAll()}));
-  if(!k){$('content').innerHTML='<div class="glass empty">Заведи первую катушку — кнопка слева.</div>';$('preset').innerHTML='';$('home').textContent='';$('bars').innerHTML='';return}
+  renderSpools();
+  if(!k){$('content').innerHTML='<div class="glass empty">Заведи первую катушку — кнопка слева.</div>';$('preset').innerHTML='';$('home').textContent='';$('bars').innerHTML='';$('extraTests').hidden=true;return}
   const T=tests(k), nk=nextKey(k), сушка=k.сушка||{};
+  const extra=T.filter(t=>t.необязательный);
   $('content').innerHTML=`
-    <section class="glass hero"><div class="reel" style="--c:${color(k.имя)};width:58px;height:58px;border-width:9px"></div>
-      <div><h3>${esc(k.имя)}</h3><p>${esc(k.материал)}${сушка.температура?` · перед калибровкой просушить: ${esc(сушка.температура)} °C, ${esc(сушка.часы)} ч`:''}</p></div><span class="sp"></span>
-      <button class="btn" id="removeSpool">Удалить катушку</button><div class="meter"><b>${k.готово===k.всего?'Откалибрована':'Готово '+k.готово+' из '+k.всего}</b><i style="--w:${k.готово/k.всего*100}%"></i></div></section>
-    <div class="glass card" id="confirmRemove" hidden>
-      <p>Удалить «${esc(k.имя)}» из панели? Замеры и пресеты сохранятся в архиве.</p>
-      <button class="btn" id="doRemove">Удалить</button>
-      <button class="btn" id="cancelRemove">Отмена</button>
-    </div>
+    <section class="glass hero">${materialBadge(k.материал)}
+      <div><h3>${esc(k.имя)}</h3>${сушка.температура?`<p>Перед калибровкой просушить: ${esc(сушка.температура)} °C, ${esc(сушка.часы)} ч</p>`:''}</div><span class="sp"></span>
+      <div class="meter"><b>${k.готово===k.всего?'Откалибрована':'Готово '+k.готово+' из '+k.всего}</b><i style="--w:${k.готово/k.всего*100}%"></i></div></section>
     <section class="chain" style="margin-top:16px">${T.filter(t=>!t.необязательный).map(t=>{const v=k.значения[t.ключ];return `<button class="glass step${t.ключ===tst?' on':''}" data-k="${esc(t.ключ)}">
       ${v?`<span class="st ${esc(v.статус)}" title="${esc(v.статус)}"></span>`:(t.ключ===nk?'<span class="next">дальше</span>':'<span class="st"></span>')}
       <div class="n">тест ${t.номер}</div><div class="t">${esc(t.название)}</div>
       <div class="v">${v?esc(v.текст):'—'} <small>${v&&v.статус!=='ошибка'?esc(t.единица):''}</small></div></button>`}).join('')}</section>
-    ${T.filter(t=>t.необязательный).map(t=>{const v=k.значения[t.ключ];return `<button class="glass step optional-step${t.ключ===tst?' on':''}" data-k="${esc(t.ключ)}" aria-pressed="${t.ключ===tst}">
-      <span><span class="n">Необязательный тест</span><span class="t" style="display:block">${esc(t.название)}</span></span>
-      <span class="v">${v?esc(v.текст):'—'} <small>${v&&v.статус!=='ошибка'?esc(t.единица):''}</small></span></button>`}).join('')}
-    <section class="glass work" style="margin-top:16px" id="work"></section>`;
-  $('removeSpool').onclick=()=>{$('confirmRemove').hidden=false};
-  $('cancelRemove').onclick=()=>{$('confirmRemove').hidden=true};
-  $('doRemove').onclick=async e=>{
-    const button=e.currentTarget;
-    button.disabled=true;
-    const r=await send('убрать',{катушка:k.имя});
-    button.disabled=false;
-    if(r.ок){sel=null;tst=null;draft=null} done(r);
-  };
+    <section class="glass work" style="margin-top:16px" id="work" tabindex="-1"></section>`;
+  $('extraTests').hidden=!extra.length;
+  $('extraItems').innerHTML=extra.map(t=>{
+        const v=k.значения[t.ключ];
+        const status=v?({'замер':'Измерен','вручную':'Задан вручную','ошибка':'Ошибка замера'}[v.статус]||'Сохранён'):'Нет замера';
+        const result=v&&v.статус!=='ошибка'?`${esc(v.текст)} ${esc(t.единица)}`:'—';
+        return `<button class="extra-test" data-k="${esc(t.ключ)}" aria-pressed="${t.ключ===tst}" aria-controls="work">
+          <span><strong>${esc(t.название)}</strong><small>${status}</small></span>
+          <span class="extra-value">${result}</span><span class="extra-chevron" aria-hidden="true"></span>
+        </button>`;
+      }).join('');
   document.querySelectorAll('.step').forEach(b=>b.onclick=()=>smooth(()=>{tst=b.dataset.k;draft=null;renderAll()}));
+  document.querySelectorAll('.extra-test').forEach(b=>b.onclick=()=>{
+    tst=b.dataset.k;
+    draft=null;
+    renderAll();
+    $('work').focus({preventScroll:!matchMedia('(max-width:1180px)').matches});
+  });
   $('preset').innerHTML='<tr><th></th><th>заводское</th><th>твоё</th></tr>'+T.map(t=>{const f=t.поля[0];
     return `<tr><td>${esc(t.название)}</td><td>${esc(k.база_поля[f]??'—')}</td><td><b>${esc(k.поля[f]??'—')}</b></td></tr>`}).join('');
   $('home').textContent=(k.дом==='пользовательский'
@@ -432,7 +577,10 @@ function done(r,advance){
   if(!r.ок)return fail(r);
   S=r.состояние; draft=null; repeat=true;
   const p=r.пресет||{}; toast(p.сообщение||'Готово');
-  if(p.катушка)sel=p.катушка;
+  if(p.катушка){
+    sel=p.катушка;spoolMaterial='';
+    spoolPage=Math.max(0,Math.floor(sortedSpools().findIndex(k=>k.имя===sel)/perPage));
+  }
   if(p.дом==='пользовательский')banner('Сохранено. Эта катушка заведена до плагина — перезапусти Orca, прежде чем печатать следующий тест.','warn');
   else if(p.перечитано===true)banner('Сохранено. Orca уже видит новое значение.');
   else if(p.перечитано)banner('Сохранено, но Orca не перечитала пресет: '+p.перечитано+' Перезапусти Orca.','warn');
@@ -442,9 +590,16 @@ function done(r,advance){
 }
 
 /* ── что выбрано в Orca ── */
+let checkRequest=0;
+document.addEventListener('visibilitychange',()=>{
+  if(S&&document.visibilityState==='visible')check();
+});
 async function check(){
+  const request=++checkRequest;
   const r=await send('выбор');
+  if(request!==checkRequest)return;
   if(!r.ок){$('check').innerHTML=`<div class="note">${esc(r.ошибка||'Недоступно')}</div>`;return}
+  if(followOrcaSpool(r.выбор))renderAll();
   $('check').innerHTML=`<div class="note" style="margin:0 0 6px">${esc(r.выбор.принтер||'')}<br>${esc(r.выбор.процесс||'')}</div>`
     +(r.замечания.map(m=>`<div class="msg ${esc(m.уровень)}">${esc(m.текст)}</div>`).join('')||'<div class="note">Замечаний нет.</div>');
 }
@@ -490,6 +645,7 @@ function diag(){
   S=r.состояние; hostInfo=r.хост||{};
   if(THEMES.includes((S.настройки||{}).тема)){theme=S.настройки.тема;applyTheme()}
 
+  followOrcaSpool(r.выбор);
   renderAll(); check();
 })();
 </script>
