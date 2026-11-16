@@ -3,8 +3,17 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
+# The plugin needs Python 3.10+ and the mesh libraries it declares for OrcaSlicer.
+# Where they are missing (the 3.9 console job) the plugin tests are skipped, not failed.
+if sys.version_info < (3, 10):
+    pytest.skip('the OrcaSlicer plugin requires Python 3.10+', allow_module_level=True)
+for _module in ('trimesh', 'numpy', 'shapely', 'mapbox_earcut', 'DracoPy', 'scipy'):
+    pytest.importorskip(_module)
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'plugin'))
-import kalibrovka as plugin
+import kalibrovka as plugin  # noqa: E402
 
 
 def test_variants_only_for_confirmed_family(tmp_path, monkeypatch):
