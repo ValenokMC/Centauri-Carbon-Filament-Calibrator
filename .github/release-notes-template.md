@@ -1,50 +1,31 @@
 ## What this is
 
-The first public release of a guided filament-calibration workflow for the
-Elegoo Centauri Carbon and OrcaSlicer. Measure the printed tests and the tool
-creates or updates a filament preset without editing Python or JSON by hand.
+**Filament Lab** — a filament calibration tab for OrcaSlicer 2.5. Pick a spool,
+open a test plate, slice and print it in Orca, enter what you measured, and the
+spool's filament preset is updated.
+
+## Install
+
+1. Download `Filament-Lab-v<version>-windows.zip` and unpack it.
+2. In OrcaSlicer: **Plugins → Install local plugin** → `kalibrovka.py`.
+3. Restart Orca if a previous version was installed.
+
+Orca installs the mesh libraries the plugin declares. Data and presets stay in
+`%APPDATA%\OrcaSlicer`.
 
 ## Changes
 
-- Guided `Setup.cmd` discovers OrcaSlicer, account folders and compatible
-  Centauri Carbon printer presets without modifying them.
-- Temperature, flow, pressure advance, maximum flow, retraction and shrinkage
-  workflows with the established formulas and scales.
-- `Dry-Run.cmd` exercises the dialog without writing; `Doctor.cmd` provides a
-  read-only environment report.
-- Atomic preset updates with timestamped backups, path-safe spool names and
-  user data stored outside the program folder.
-- Support via CloudTips is available from `About.cmd`, with one unobtrusive note after
-  a successful preset save at most once per month.
-
-## Fixes
-
-- OrcaSlicer's five built-in calibration tests now start from the live
-  Calibration menu, preserving the session-only calibration modes.
-- Saved wizard projects with lost calibration state are rejected; the
-  project-owned shrinkage bar remains available from disk.
-- Public-safety checks inspect every shipped `.3mf` and the final ZIP for
-  printer addresses or private data.
+<!-- From CHANGELOG.md -->
 
 ## Compatibility
 
-- Windows 10 / 11
-- Python 3.9 or newer
-- OrcaSlicer 2.4.2 verified
-- Elegoo Centauri Carbon with a 0.4 mm nozzle verified
+- OrcaSlicer 2.5, Windows 10 / 11
+- Calibrated end to end on an Elegoo Centauri Carbon with a 0.4 mm nozzle
+- Other printers follow the selected Orca profile but are not verified
 
 ## Known limitations
 
-- Other OrcaSlicer releases, nozzle sizes, Centauri Carbon 2, macOS and Linux
-  have not yet been verified.
-- Built-in Orca calibration modes must be started from the live menu; only the
-  included shrinkage model is opened from disk.
-
-## Updating from the previous version
-
-This is the first public release. For later updates, unpack the new ZIP over the
-old program folder; measurements, backups and settings in `%LOCALAPPDATA%` are
-not touched.
+<!-- Keep honest: what was not tested for this release. -->
 
 ## Verifying the download
 

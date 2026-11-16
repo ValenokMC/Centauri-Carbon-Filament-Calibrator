@@ -1,37 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Build the Windows release archive, and check what went into it.
+"""Build the Filament Lab release archive, and check what went into it.
 
-    python tools/build_release.py --version 1.0.0
+    python tools/build_release.py --version 2.0.0
     python tools/build_release.py --verify dist
 
-The archive is built from an explicit allow-list, not by copying the repository
-and deleting things afterwards. That distinction matters: a deny-list is only as
-good as its last update, and the thing it would miss is exactly the thing that
-must not ship.
+The archive holds the single plugin file built by plugin/build.py plus the
+documents a user needs. It is assembled from an explicit allow-list, not by
+copying the repository and deleting things afterwards: a deny-list is only as
+good as its last update, and what it would miss is exactly what must not ship.
 """
 import argparse
 import hashlib
 import os
-import shutil
+import subprocess
 import sys
 import zipfile
 
 
-ARCHIVE_STEM = "Centauri-Calibrator"
+ARCHIVE_STEM = "Filament-Lab"
+PLUGIN_FILE = "kalibrovka.py"
 
-# Exactly what a user needs to run the program. Nothing else is copied.
+# Documents shipped next to the plugin file. Nothing else is copied.
 INCLUDE_FILES = [
-    "Setup.cmd",
-    "Run.cmd",
-    "Doctor.cmd",
-    "Dry-Run.cmd",
-    "Prepare-Templates.cmd",
-    "About.cmd",
-    "Open-Data-Folder.cmd",
-    "_find-python.cmd",
-    "Настроить.cmd",
-    "Калибровать.cmd",
     "README.md",
     "README_RU.md",
     "CHANGELOG.md",
@@ -39,65 +30,29 @@ INCLUDE_FILES = [
     "SUPPORT.md",
     "SECURITY.md",
     "THIRD_PARTY_NOTICES.md",
-    "examples/Journal.example.csv",
-    "docs/installation.md",
-    "docs/calibration.md",
-    "docs/templates.md",
-    "docs/troubleshooting.md",
-    "docs/security.md",
-]
-
-INCLUDE_TREES = [
-    ("src/centauri_calibrator", ".py"),
-    # Only this project's own shrinkage geometry is shipped. Orca's other five
-    # tests are started live from its Calibration menu and are not redistributed.
-    ("templates", ".3mf"),
 ]
 
 # Names that must never appear inside the archive, whatever the allow-list says.
-# Belt and braces: if one of these turns up, the build is wrong.
 FORBIDDEN_IN_ARCHIVE = (
-    "config.json", "Journal.csv", "support.json", ".env",
-    "__pycache__", ".pyc", ".git", "Journal.csv", ".pytest_cache",
+    "config.json", "Journal.csv", "Журнал.csv", ".env",
+    "__pycache__", ".pyc", ".git", ".pytest_cache", "_Локальное",
 )
 
 # Files a user must find in the archive, or the release is broken.
-REQUIRED_IN_ARCHIVE = (
-    "Setup.cmd", "Run.cmd", "VERSION",
-    "src/centauri_calibrator/__main__.py", "src/centauri_calibrator/session.py",
-    "src/centauri_calibrator/scales.json",
-    "templates/PLA/2b_shrinkage.3mf",
-    "examples/Journal.example.csv", "LICENSE",
-)
+REQUIRED_IN_ARCHIVE = (PLUGIN_FILE, "VERSION", "README.md", "LICENSE",
+                       "THIRD_PARTY_NOTICES.md")
 
 
 def repo_root():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def collect(root):
-    """(archive_name, absolute_path) pairs, from the allow-list only."""
-    items = []
-    for relative in INCLUDE_FILES:
-        full = os.path.join(root, *relative.split("/"))
-        if not os.path.exists(full):
-            raise SystemExit("missing from the repository: %s" % relative)
-        items.append((relative, full))
-
-    for tree, suffix in INCLUDE_TREES:
-        base = os.path.join(root, *tree.split("/"))
-        for directory, dirnames, filenames in os.walk(base):
-            dirnames[:] = [d for d in dirnames if d != "__pycache__"]
-            for name in sorted(filenames):
-                # .py trees carry their .json data files too (scales.json);
-                # a .3mf tree carries only .3mf.
-                allowed = (suffix, ".json") if suffix == ".py" else (suffix,)
-                if suffix and not name.endswith(allowed):
-                    continue
-                full = os.path.join(directory, name)
-                relative = os.path.relpath(full, root).replace(os.sep, "/")
-                items.append((relative, full))
-    return items
+def build_plugin(root, out_dir):
+    """Run plugin/build.py and return the path of the single plugin file."""
+    target = os.path.join(out_dir, PLUGIN_FILE)
+    subprocess.run([sys.executable, "-B", os.path.join(root, "plugin", "build.py"), target],
+                   check=True)
+    return target
 
 
 def build(version, out_dir):
@@ -106,11 +61,17 @@ def build(version, out_dir):
     name = "%s-v%s-windows" % (ARCHIVE_STEM, version)
     archive = os.path.join(out_dir, name + ".zip")
 
-    items = collect(root)
+    items = [(PLUGIN_FILE, build_plugin(root, out_dir))]
+    for relative in INCLUDE_FILES:
+        full = os.path.join(root, *relative.split("/"))
+        if not os.path.exists(full):
+            raise SystemExit("missing from the repository: %s" % relative)
+        items.append((relative, full))
+
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
         for relative, full in items:
             z.write(full, "%s/%s" % (name, relative))
-        # A version the running program and a bug report can both point at.
+        # A version the user and a bug report can both point at.
         z.writestr("%s/VERSION" % name, version + "\n")
 
     digest = sha256(archive)
@@ -119,8 +80,7 @@ def build(version, out_dir):
         f.write("%s  %s\n" % (digest, os.path.basename(archive)))
 
     print("built  %s" % archive)
-    print("       %d files, %.1f KB" % (len(items) + 1,
-                                        os.path.getsize(archive) / 1024.0))
+    print("       %d files, %.1f KB" % (len(items) + 1, os.path.getsize(archive) / 1024.0))
     print("sha256 %s" % digest)
     return archive
 
@@ -150,7 +110,9 @@ def verify(target):
         print("\nchecking %s" % os.path.basename(archive))
         with zipfile.ZipFile(archive) as z:
             names = z.namelist()
-        stripped = ["/".join(n.split("/")[1:]) for n in names]
+            stripped = ["/".join(n.split("/")[1:]) for n in names]
+            plugin = [n for n in names if n.endswith("/" + PLUGIN_FILE)]
+            source = z.read(plugin[0]).decode("utf-8") if plugin else ""
 
         for forbidden in FORBIDDEN_IN_ARCHIVE:
             hits = [n for n in names if forbidden in n]
@@ -164,9 +126,18 @@ def verify(target):
                 failed = True
                 print("  FAIL  missing %s" % required)
 
+        # The plugin file must be the built one: every build marker replaced.
+        leftovers = [m for m in ('"@@PAGE@@"', '"@@TAB_ICON@@"', "# @@ШКАЛЫ@@", "# @@МОДЕЛИ@@")
+                     if m in source]
+        if source and leftovers:
+            failed = True
+            print("  FAIL  %s was not built: %s" % (PLUGIN_FILE, ", ".join(leftovers)))
+        if source and "[tool.orcaslicer.plugin]" not in source:
+            failed = True
+            print("  FAIL  %s has no OrcaSlicer plugin header" % PLUGIN_FILE)
+
         if not failed:
-            print("  ok    %d entries, nothing forbidden, everything required"
-                  % len(names))
+            print("  ok    %d entries, nothing forbidden, everything required" % len(names))
     return 1 if failed else 0
 
 

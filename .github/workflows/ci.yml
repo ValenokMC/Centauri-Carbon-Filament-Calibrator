@@ -16,9 +16,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The oldest version the project claims to support, and the newest that
-        # people are likely to have. Testing the claim is the point of the
-        # bottom entry: dropping it would let 3.9 support rot silently.
+        # 3.12 runs everything, plugin included: OrcaSlicer 2.5 embeds a modern
+        # Python and the plugin needs 3.10+. 3.9 keeps the release tooling honest
+        # on an old interpreter; the plugin tests skip themselves there. The job
+        # names are required checks on main, so keep them.
         python: ["3.9", "3.12"]
 
     steps:
@@ -31,12 +32,14 @@ jobs:
       - name: Install development dependencies
         run: python -m pip install -r requirements-dev.txt
 
-      - name: Check that the package imports with no third-party modules
-        # The release promises "standard library only". This is that promise,
-        # tested: the environment holds nothing but pytest, so an accidental
-        # `import requests` in src/ fails here rather than on a user's machine.
-        run: |
-          python -c "import sys; sys.path.insert(0, 'src'); import centauri_calibrator, centauri_calibrator.session, centauri_calibrator.wizard; print(centauri_calibrator.__version__)"
+      - name: Install the plugin's mesh libraries
+        # The plugin declares these in its metadata and OrcaSlicer installs them.
+        if: matrix.python != '3.9'
+        run: python -m pip install trimesh numpy shapely mapbox-earcut DracoPy scipy
+
+      - name: Check that the plugin builds into one file
+        if: matrix.python != '3.9'
+        run: python plugin/build.py dist/kalibrovka.py
 
       - name: Run tests
         run: python -m pytest tests/ -q
@@ -50,7 +53,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Byte-compile every module
-        run: python -m compileall -q src tools tests
+        run: python -m compileall -q plugin tools tests
 
   safety:
     name: Public-safety scan

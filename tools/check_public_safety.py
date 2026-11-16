@@ -142,7 +142,10 @@ ALLOWED = {
 # Never scanned. Not exemptions - these simply must not exist in a clean tree,
 # and are reported separately by check_forbidden_paths.
 SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "venv", ".venv",
-             "node_modules", ".idea", ".vscode", "dist", "build"}
+             "node_modules", ".idea", ".vscode", "dist", "build",
+             # The maintainer's git-excluded working folder: history, backups and
+             # real data that never leave the machine. Not part of any checkout.
+             "_Локальное"}
 
 # Paths that must not exist at all.
 FORBIDDEN_NAMES = re.compile(

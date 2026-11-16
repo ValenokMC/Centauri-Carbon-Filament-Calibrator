@@ -5,13 +5,41 @@ All notable changes to this project are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [Unreleased] — 2.0.0
+
+The project becomes **Filament Lab**, a calibration tab inside OrcaSlicer 2.5.
+The console calibrator is removed from `main`; it stays available under the
+`v1.0.0` tag for OrcaSlicer 2.4.
+
+### Added
+
+- **OrcaSlicer plugin** (`plugin/`, built by `plugin/build.py` into one file and
+  installed through *Plugins → Install local plugin*).
+- Temperature, flow, shrinkage, pressure-advance and max-flow tests open as ready
+  plates on top of the printer and process selected in Orca. Tower and flow
+  models are read from the OrcaSlicer installation; the shrinkage bar is the
+  project's own.
+- Pressure advance is measured on a tower, by height.
+- Spool presets live in a local preset bundle that Orca reloads without a
+  restart; nozzle variants (0.2 / 0.6 / 0.8) are estimated from the 0.4 result.
+- The tab follows the filament selected in Orca, archives removed spools instead
+  of deleting them, and has a filtered, paged spool list.
+- Retraction is an optional test run through Orca's own *Calibration → Retraction*.
+- Light and dark themes, including a themed manufacturer list in the new-spool form.
 
 ### Changed
 
-- `About.cmd` and the monthly note now point to CloudTips instead of Tribute: a
-  lower fee, and it takes SBP and any Russian bank card. Tribute stays in the
-  README and the GitHub Sponsor button for paying with a foreign card.
+- The max-flow result keeps a 10 % margin below the failure point (was 20 %).
+- The release archive, CI and documentation now describe and build the plugin.
+
+### Removed
+
+- The console calibrator: `src/`, the `.cmd` launchers, the shrinkage templates,
+  its documentation and its tests.
+
+### Earlier, never released on its own
+
+- `About.cmd` and the monthly note pointed to CloudTips instead of Tribute.
 
 ## [1.0.0] — 2026-08-23
 
