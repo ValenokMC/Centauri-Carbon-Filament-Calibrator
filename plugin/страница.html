@@ -62,16 +62,7 @@ body h2{font:600 12px/1.3 var(--text);text-transform:uppercase;letter-spacing:.0
 /* список катушек */
 .spool{display:flex;gap:11px;align-items:center;width:100%;text-align:left;padding:10px 11px;border-radius:15px;border:1px solid transparent;background:none}
 .spool-filter{margin-bottom:9px}
-.spool-filter summary{display:flex;justify-content:space-between;align-items:center;list-style:none;padding:8px 11px;border:1px solid var(--line);border-radius:11px;background:var(--field);font-size:13px}
-.spool-filter summary::-webkit-details-marker{display:none}
-.spool-filter summary::after{content:"";width:6px;height:6px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin-right:3px}
-.spool-filter[open] summary{border-color:var(--acc)}
-.spool-filter[open] summary::after{transform:rotate(225deg)}
-.spool-filter[open] .spool-filter-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:5px;padding:5px;border:1px solid var(--line);border-radius:11px;background:var(--field)}
-.app .spool-filter-options button{min-width:0;padding:5px 3px;overflow-wrap:anywhere;text-align:center;border:1px solid transparent;border-radius:7px;background:none;font-size:12px}
-.spool-filter-options button:first-child{grid-column:1/-1}
-.app .spool-filter-options button:hover,.app .spool-filter-options button:focus-visible,.app .spool-filter-options button[aria-pressed=true]{background:var(--card2)}
-.app .spool-filter-options button[aria-pressed=true]{font-weight:700;border-color:var(--acc)}
+.app .spool-filter .drop-btn{padding:8px 11px;border-radius:11px;font-size:13px}
 .spool-row{display:grid;grid-template-columns:minmax(0,1fr) 34px;align-items:center;border:1px solid transparent;border-radius:12px}
 .spool-row:hover,.spool-row.on{background:var(--card2)}
 .spool-row.on{border-color:var(--line)}
@@ -189,26 +180,39 @@ body tr:hover td{background:none}
 .dlg{width:min(460px,100%);padding:22px;display:grid;gap:13px}
 .dlg h4{margin:0;font:650 20px var(--display);color:var(--fg)}
 .dlg label{display:grid;gap:5px;font-size:13px;color:var(--muted)}
-/* Список производителей свой, а не <datalist>: системное окно подсказок рисуется
-   белым в тёмной теме и не берёт ни цвета, ни шрифт панели. */
-.combo-field{display:grid;gap:5px}
-.combo{position:relative;display:grid}
+/* Все выпадающие списки панели свои, а не системные: окно <select> и подсказки
+   <datalist> рисует Windows — белым в тёмной теме и чужим шрифтом. Два вида с одним
+   оформлением: .combo — поле, куда можно вписать своё (производитель), и .drop —
+   выбор из готового списка (материал, базовый профиль, фильтр катушек). У .drop
+   настоящий <select> остаётся спрятанным рядом и хранит значение. */
+.combo-field{display:grid;gap:5px;font-size:13px;color:var(--muted)}
+.combo,.drop{position:relative;display:grid}
 .dlg .combo input{width:100%;padding-right:40px}
 .dlg .combo-toggle{position:absolute;top:0;right:0;bottom:0;width:38px;border:0;border-radius:0 12px 12px 0;background:none;display:grid;place-items:center}
-.combo-toggle::after{content:"";width:7px;height:7px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg)}
-.combo-toggle:hover::after,.combo input[aria-expanded=true]+.combo-toggle::after{border-color:var(--fg)}
-.combo input[aria-expanded=true]+.combo-toggle::after{transform:translateY(2px) rotate(225deg)}
-.combo input[aria-expanded=true]{border-color:var(--acc)}
-.dlg .combo-list{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:3;margin:0;padding:5px;list-style:none;
+.combo-toggle::after,.drop-btn::after{content:"";flex:none;width:7px;height:7px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg)}
+.combo-toggle:hover::after,.combo input[aria-expanded=true]+.combo-toggle::after,.drop-btn:hover::after,.drop-btn[aria-expanded=true]::after{border-color:var(--fg)}
+.combo input[aria-expanded=true]+.combo-toggle::after,.drop-btn[aria-expanded=true]::after{transform:translateY(2px) rotate(225deg)}
+.combo input[aria-expanded=true],.app .drop-btn[aria-expanded=true],.dlg .drop-btn[aria-expanded=true]{border-color:var(--acc)}
+.app .drop-btn,.dlg .drop-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-width:0;padding:10px 13px;
+  border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--fg);font-size:14px;text-align:left;cursor:pointer}
+/* Поля формы тем же кеглем, что и кнопки списков: иначе input наследует 13px от подписи. */
+.dlg input[type=text]{font-size:14px}
+.drop-btn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drop-btn:disabled{opacity:.55;cursor:default}
+.drop select{display:none}
+.combo-list,.drop-list{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:5;margin:0;padding:5px;list-style:none;
   max-height:228px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;background:var(--menu);box-shadow:var(--shadow);
   scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
-.combo-list[hidden]{display:none}
-.dlg .combo-list.up{top:auto;bottom:calc(100% + 5px)}
-.combo-list::-webkit-scrollbar{width:8px}
-.combo-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-.combo-list::-webkit-scrollbar-thumb:hover{background:var(--muted)}
-.dlg .combo-list li{margin:0;padding:8px 11px;border-radius:8px;font-size:14px;color:var(--fg);background:none;cursor:pointer;overflow-wrap:anywhere}
-.dlg .combo-list li[aria-selected=true]{background:var(--menu-hi);box-shadow:inset 3px 0 0 var(--acc)}
+.combo-list[hidden],.drop-list[hidden]{display:none}
+.combo-list.up,.drop-list.up{top:auto;bottom:calc(100% + 5px)}
+.combo-list::-webkit-scrollbar,.drop-list::-webkit-scrollbar{width:8px}
+.combo-list::-webkit-scrollbar-thumb,.drop-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+.combo-list::-webkit-scrollbar-thumb:hover,.drop-list::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+body .combo-list li,body .drop-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0;padding:8px 11px;
+  border-radius:8px;font-size:14px;color:var(--fg);background:none;cursor:pointer;overflow-wrap:anywhere}
+body .combo-list li[aria-selected=true],body .drop-list li.active{background:var(--menu-hi);box-shadow:inset 3px 0 0 var(--acc)}
+body .drop-list li[aria-selected=true]{font-weight:650}
+body .drop-list li[aria-selected=true]::after{content:"";flex:none;width:5px;height:10px;border:solid var(--acc);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
 .combo-list mark{background:none;color:var(--acc);font-weight:650}
 .empty{padding:44px 20px;text-align:center;color:var(--muted)}
 details summary{cursor:pointer}
@@ -250,10 +254,7 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
   </header>
 
   <aside class="glass f"><h2>Катушки</h2>
-    <details id="spoolFilter" class="spool-filter">
-      <summary id="spoolFilterLabel">Все материалы</summary>
-      <div id="spoolFilterOptions" class="spool-filter-options" role="group" aria-label="Фильтр по материалу"></div>
-    </details>
+    <div class="spool-filter"><select id="spoolFilter" data-drop aria-label="Фильтр по материалу"></select></div>
     <div id="spools"></div><nav id="spoolPages" aria-label="Страницы списка катушек"></nav>
     <button class="spool new" id="add">+ Новая катушка</button></aside>
   <dialog id="removeDialog" class="glass" aria-labelledby="removeTitle">
@@ -290,8 +291,8 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
 
 <div class="veil" id="veil"><form class="glass dlg" id="dlg">
   <h4>Новая катушка</h4>
-  <label>Материал<select id="nMat"></select></label>
-  <label>Базовый профиль Orca<select id="nBase" required></select></label>
+  <div class="combo-field"><span class="field-label" id="nMatLabel">Материал</span><select id="nMat" data-drop aria-labelledby="nMatLabel"></select></div>
+  <div class="combo-field"><span class="field-label" id="nBaseLabel">Базовый профиль Orca</span><select id="nBase" data-drop aria-labelledby="nBaseLabel"></select></div>
   <p class="note" id="nBaseInfo"></p>
   <div class="combo-field"><label for="nVendor">Производитель</label>
     <div class="combo"><input type="text" id="nVendor" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="vendorList" autocomplete="off" placeholder="ELEGOO" required>
@@ -307,6 +308,93 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ── выпадающие списки ──
+   <select data-drop> получает свою кнопку и свой список в цветах темы. Сам select
+   остаётся спрятанным: в нём лежат варианты и значение, так что остальной код
+   по-прежнему пишет select.innerHTML, читает select.value и ловит onchange.
+   Значение, выставленное из кода (select.value = …), показывает dropRefresh(). */
+let dropSeq=0;
+function dropRefresh(select){
+  const d=select&&select._drop;if(!d)return;
+  const option=select.options[select.selectedIndex];
+  d.label.textContent=option?option.textContent:'—';
+  d.button.disabled=select.disabled||!select.options.length;
+}
+function dropClose(d){
+  if(d.list.hidden)return;
+  d.list.hidden=true;d.button.setAttribute('aria-expanded','false');d.button.removeAttribute('aria-activedescendant');d.active=-1;
+}
+function dropMove(d,i,scroll){
+  const items=[...d.list.children];if(!items.length)return;
+  d.active=(i+items.length)%items.length;
+  items.forEach((li,k)=>li.classList.toggle('active',k===d.active));
+  d.button.setAttribute('aria-activedescendant',items[d.active].id);
+  if(scroll)items[d.active].scrollIntoView({block:'nearest'});
+}
+function dropOpen(d){
+  const select=d.select;if(d.button.disabled)return;
+  d.list.innerHTML=[...select.options].map((o,i)=>
+    `<li role="option" id="${d.id}o${i}" aria-selected="${i===select.selectedIndex}">${esc(o.textContent)}</li>`).join('');
+  d.list.hidden=false;d.button.setAttribute('aria-expanded','true');
+  // В низком окне Orca под кнопкой может не хватить места — тогда список раскрывается вверх.
+  const box=d.button.getBoundingClientRect(),need=Math.min(d.list.scrollHeight,228)+8;
+  d.list.classList.toggle('up',innerHeight-box.bottom<need&&box.top>innerHeight-box.bottom);
+  dropMove(d,Math.max(0,select.selectedIndex),true);
+}
+function dropPick(d,i){
+  const select=d.select;dropClose(d);
+  if(i<0||i>=select.options.length)return;
+  const changed=select.selectedIndex!==i;
+  select.selectedIndex=i;dropRefresh(select);
+  if(changed)select.dispatchEvent(new Event('change',{bubbles:true}));
+}
+function dropEnhance(select){
+  const id='drop'+(++dropSeq), wrap=document.createElement('div');
+  wrap.className='drop';
+  wrap.innerHTML=`<button type="button" class="drop-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="${id}"><span></span></button>`
+    +`<ul class="drop-list" id="${id}" role="listbox" hidden></ul>`;
+  select.replaceWith(wrap);wrap.appendChild(select);
+  const d={select,id,button:wrap.querySelector('.drop-btn'),label:wrap.querySelector('.drop-btn span'),list:wrap.querySelector('.drop-list'),active:-1,typed:'',typedAt:0};
+  select._drop=d;
+  if(select.getAttribute('aria-labelledby'))d.button.setAttribute('aria-labelledby',select.getAttribute('aria-labelledby'));
+  if(select.getAttribute('aria-label'))d.button.setAttribute('aria-label',select.getAttribute('aria-label'));
+  d.list.setAttribute('aria-label',select.getAttribute('aria-label')||($(select.getAttribute('aria-labelledby'))||{}).textContent||'');
+  d.button.onclick=()=>d.list.hidden?dropOpen(d):dropClose(d);
+  d.button.addEventListener('blur',()=>dropClose(d));
+  d.button.addEventListener('keydown',e=>{
+    const open=!d.list.hidden, n=select.options.length;
+    if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){
+      e.preventDefault();
+      if(!open){dropOpen(d);return}
+      dropMove(d,e.key==='Home'?0:e.key==='End'?n-1:d.active+(e.key==='ArrowDown'?1:-1),true);
+    }else if(e.key==='Enter'||e.key===' '){
+      if(!open)return;          // закрытый список Enter/пробел откроет обычным нажатием кнопки
+      e.preventDefault();dropPick(d,d.active);
+    }else if(e.key==='Escape'&&open){
+      e.preventDefault();e.stopPropagation();dropClose(d);
+    }else if(e.key==='Tab'){
+      dropClose(d);
+    }else if(e.key.length===1&&/\S/.test(e.key)){
+      // Набор с клавиатуры: переход к первому варианту, который начинается с набранного.
+      const now=Date.now();d.typed=(now-d.typedAt<700?d.typed:'')+e.key.toLowerCase();d.typedAt=now;
+      const from=open?d.active:select.selectedIndex, opts=[...select.options];
+      for(let k=1;k<=n;k++){
+        // Одна буква — следующий подходящий; несколько — начиная с текущего.
+        const i=(Math.max(from,0)+(d.typed.length>1?k-1:k))%n;
+        if(opts[i].textContent.toLowerCase().startsWith(d.typed)){open?dropMove(d,i,true):dropPick(d,i);break}
+      }
+    }
+  });
+  // Нажатие в списке не должно уводить фокус с кнопки, иначе список закроется до выбора.
+  d.list.addEventListener('mousedown',e=>e.preventDefault());
+  d.list.addEventListener('click',e=>{const li=e.target.closest('li');if(li)dropPick(d,[...d.list.children].indexOf(li))});
+  d.list.addEventListener('mousemove',e=>{const li=e.target.closest('li');if(li&&!li.classList.contains('active'))dropMove(d,[...d.list.children].indexOf(li),false)});
+  // Варианты меняет остальной код (innerHTML) — подпись на кнопке следует за ними.
+  new MutationObserver(()=>{dropRefresh(select);if(!d.list.hidden)dropClose(d)}).observe(select,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});
+  dropRefresh(select);
+}
+document.querySelectorAll('select[data-drop]').forEach(dropEnhance);
 const HUES=[350,255,165,85,300,25,205,55];
 // Цвет катушки — от имени, а не от места в списке: новая катушка не должна перекрашивать остальные.
 const color=n=>{let h=0;for(const c of String(n))h=(h*31+c.codePointAt(0))>>>0;return `oklch(74% .15 ${HUES[h%HUES.length]})`};
@@ -395,8 +483,8 @@ function renderSpools(){
   const ordered=sortedSpools();
   const materials=[...new Set(ordered.map(k=>k.материал))];
   if(!materials.includes(spoolMaterial))spoolMaterial='';
-  $('spoolFilterLabel').textContent=spoolMaterial||'Все материалы';
-  $('spoolFilterOptions').innerHTML=['',...materials].map(m=>`<button type="button" data-material="${esc(m)}" aria-pressed="${m===spoolMaterial}">${esc(m||'Все материалы')}</button>`).join('');
+  $('spoolFilter').innerHTML=['',...materials].map(m=>`<option value="${esc(m)}">${esc(m||'Все материалы')}</option>`).join('');
+  $('spoolFilter').value=spoolMaterial;dropRefresh($('spoolFilter'));
   const results=ordered.filter(k=>!spoolMaterial||k.материал===spoolMaterial);
   const pages=Math.max(1,Math.ceil(results.length/perPage));
   spoolPage=Math.min(spoolPage,pages-1);
@@ -418,22 +506,7 @@ function renderSpools(){
   if($('pagePrev'))$('pagePrev').onclick=()=>{spoolPage--;renderSpools();($('pagePrev').disabled?$('pageNext'):$('pagePrev')).focus()};
   if($('pageNext'))$('pageNext').onclick=()=>{spoolPage++;renderSpools();($('pageNext').disabled?$('pagePrev'):$('pageNext')).focus()};
 }
-$('spoolFilterOptions').onclick=e=>{
-  const button=e.target.closest('button[data-material]');
-  if(!button)return;
-  spoolMaterial=button.dataset.material;
-  spoolPage=0;
-  $('spoolFilter').open=false;
-  renderSpools();
-  $('spoolFilterLabel').focus();
-};
-document.addEventListener('click',e=>{if(!$('spoolFilter').contains(e.target))$('spoolFilter').open=false});
-$('spoolFilter').addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&$('spoolFilter').open){
-    $('spoolFilter').open=false;
-    $('spoolFilterLabel').focus();
-  }
-});
+$('spoolFilter').onchange=()=>{spoolMaterial=$('spoolFilter').value;spoolPage=0;renderSpools()};
 $('spools').onclick=e=>{
   const button=e.target.closest('button[data-n]');
   if(!button)return;

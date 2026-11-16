@@ -5,7 +5,7 @@
 # [tool.orcaslicer.plugin]
 # name = "Filament Lab"
 # description = "Калибровочные плиты и пресеты филамента для OrcaSlicer."
-# version = "0.8.1"
+# version = "0.8.2"
 # ///
 r"""
 Плагин OrcaSlicer 2.5: вкладка «Калибровка пластика». Весь проект калибровки — этот файл,
