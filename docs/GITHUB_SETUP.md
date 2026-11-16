@@ -10,19 +10,19 @@ Work top to bottom; the order matters in a few places.
 ## 1. Create the repository
 
 - Owner: **ValenokMC**
-- Name: **Centauri-Carbon-Filament-Calibrator**
+- Name: **OrcaSlicer-Calibration-Plugin**
 - Visibility: **Public**
 - **Do not** let GitHub add a README, a `.gitignore` or a licence — they are
   already here and would collide.
 
 ```bash
-gh repo create ValenokMC/Centauri-Carbon-Filament-Calibrator --public --source . --remote origin
+gh repo create ValenokMC/OrcaSlicer-Calibration-Plugin --public --source . --remote origin
 ```
 
 or add the remote by hand:
 
 ```bash
-git remote add origin https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator.git
+git remote add origin https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin.git
 ```
 
 ## 2. Push

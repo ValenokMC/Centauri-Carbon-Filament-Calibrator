@@ -4,7 +4,7 @@
 
 **Do not open a public issue.**
 
-Use [GitHub's private vulnerability reporting](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/security/advisories/new),
+Use [GitHub's private vulnerability reporting](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/security/advisories/new),
 or write to [@SupporBiBot](https://t.me/SupporBiBot?start=centauri_calibrator)
 and ask for a private channel.
 

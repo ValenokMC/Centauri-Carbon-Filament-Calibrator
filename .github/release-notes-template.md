@@ -35,4 +35,4 @@ and compare with `SHA256SUMS.txt`.
 
 ---
 
-Full changelog: [CHANGELOG.md](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/CHANGELOG.md)
+Full changelog: [CHANGELOG.md](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/blob/main/CHANGELOG.md)

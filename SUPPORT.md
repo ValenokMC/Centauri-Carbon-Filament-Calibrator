@@ -6,9 +6,9 @@
    The working plan and known gaps are in [plugin/СОСТОЯНИЕ.md](plugin/СОСТОЯНИЕ.md).
 2. **The tab's own "Диагностика" section** (bottom of the Filament Lab tab). It
    shows the paths the plugin uses and the last errors — paste it into a report.
-3. **[Discussions](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/discussions)** —
+3. **[Discussions](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/discussions)** —
    questions, "is this measurement plausible", results from a new spool.
-4. **[Issues](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/issues)** —
+4. **[Issues](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/issues)** —
    a reproducible bug or a specific request.
 5. **[@SupporBiBot](https://t.me/SupporBiBot?start=centauri_calibrator)** — if you
    have no GitHub account or would rather not write in public.

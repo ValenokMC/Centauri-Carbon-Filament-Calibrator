@@ -103,5 +103,5 @@ file to edit.
   opens every `.3mf` — they are ZIP archives — and fails the build if one does.
 - No telemetry of any kind.
 
-[Unreleased]: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/tag/v1.0.0
+[Unreleased]: https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/releases/tag/v1.0.0
