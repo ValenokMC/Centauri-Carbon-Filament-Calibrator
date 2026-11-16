@@ -21,9 +21,9 @@ implementation proves only that the code equals itself.
 
 ## Checklist
 
-- [ ] No third-party runtime dependency added to `src/`
-- [ ] No test touches a real OrcaSlicer install, a real journal, or a running slicer
-- [ ] Templates are still opened read-only, and the hash test still passes
+- [ ] `python plugin/build.py dist/kalibrovka.py` still builds one file
+- [ ] No new runtime dependency, or it is declared in the plugin header and in THIRD_PARTY_NOTICES.md
+- [ ] No test touches a real OrcaSlicer install or the user's data
 - [ ] No `.3mf` added that carries a `print_host`
 - [ ] No personal data in the diff — printer address, account name, user paths, real spool names
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`, if a user would notice this

@@ -1,26 +1,24 @@
 name: Installation problem
-description: Setup, template building, or a launcher does not work
-title: "[setup] "
+description: The plugin does not install, does not load, or the tab stays empty
+title: "[install] "
 labels: ["installation", "needs triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        **Run `Doctor.cmd` first.** It is read-only and it answers most setup
-        questions on its own. Paste its output below.
+        If the tab opens at all, copy the text of its **Диагностика** section
+        (bottom of the tab) into the field below.
 
   - type: dropdown
     id: stage
     attributes:
       label: Where it stops
       options:
-        - Python is not found
-        - OrcaSlicer is not found
-        - The Elegoo base profile is not found
-        - The wizard cannot find my printer preset
-        - No write access to the preset folder
-        - Prepare-Templates.cmd fails
-        - The preset is written but does not appear in OrcaSlicer
+        - Orca refuses to install the plugin file
+        - Orca fails to install the plugin's libraries
+        - The plugin is installed but the tab does not appear
+        - The tab is empty or shows an error
+        - A new spool does not appear in Orca's filament list
         - Something else
     validations:
       required: true
@@ -28,8 +26,17 @@ body:
   - type: input
     id: version
     attributes:
-      label: Application version
-      placeholder: v1.0.0
+      label: Plugin version
+      description: OrcaSlicer → Plugins shows it.
+      placeholder: 0.8.0
+    validations:
+      required: true
+
+  - type: input
+    id: orca
+    attributes:
+      label: OrcaSlicer version
+      placeholder: 2.5.0
     validations:
       required: true
 
@@ -37,25 +44,7 @@ body:
     id: windows
     attributes:
       label: Windows version
-      placeholder: Windows 10 22H2
-    validations:
-      required: true
-
-  - type: input
-    id: python
-    attributes:
-      label: Python version
-      description: Run `py -3 --version`. If that fails, say so.
-      placeholder: Python 3.12.2
-    validations:
-      required: true
-
-  - type: input
-    id: orca
-    attributes:
-      label: OrcaSlicer version and install path
-      description: Replace your user name with USER if the path contains it.
-      placeholder: 2.4.2, C:\Program Files\OrcaSlicer
+      placeholder: Windows 11 24H2
     validations:
       required: true
 
@@ -71,17 +60,9 @@ body:
       required: true
 
   - type: textarea
-    id: doctor
+    id: diagnostics
     attributes:
-      label: Doctor.cmd output
-      render: text
-    validations:
-      required: true
-
-  - type: textarea
-    id: output
-    attributes:
-      label: What the window showed when it failed
+      label: Диагностика / error text
       render: text
 
   - type: checkboxes

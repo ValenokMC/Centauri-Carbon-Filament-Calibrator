@@ -1,3 +1,4 @@
-# Development only. The bot itself needs nothing but the Python standard
-# library, and nothing here is shipped in a release.
+# Development only, nothing here is shipped. The plugin's own mesh libraries
+# (trimesh, numpy, shapely, mapbox-earcut, DracoPy, scipy) are installed by
+# OrcaSlicer; install them separately to run the plugin tests.
 pytest>=7.0

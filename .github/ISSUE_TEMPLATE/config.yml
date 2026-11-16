@@ -11,14 +11,13 @@ contact_links:
       supposed to happen", ideas, or showing what you printed.
 
   - name: Documentation
-    url: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/docs/installation.md
-    about: Installation, configuration and troubleshooting.
+    url: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/README.md
+    about: What the plugin does, how to install it, where data lives.
 
   - name: Write to the author on Telegram
     url: https://t.me/SupporBiBot?start=centauri_calibrator
     about: >
       If you do not have a GitHub account, or would rather not write in public.
-      Do not send your bot token here either.
 
   - name: Report a security vulnerability
     url: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/security/policy
