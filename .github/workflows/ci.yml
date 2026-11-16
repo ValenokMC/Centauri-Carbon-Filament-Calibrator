@@ -38,6 +38,13 @@ jobs:
         run: |
           python -c "import sys; sys.path.insert(0, 'src'); import centauri_calibrator, centauri_calibrator.session, centauri_calibrator.wizard; print(centauri_calibrator.__version__)"
 
+      - name: Install the plugin's mesh libraries
+        # After the check above, so the console package stays proven standard-library only.
+        # The OrcaSlicer plugin declares these in its metadata and Orca installs them; its
+        # tests need them too. The plugin requires Python 3.10+, so the 3.9 job skips them.
+        if: matrix.python != '3.9'
+        run: python -m pip install trimesh numpy shapely mapbox-earcut DracoPy scipy
+
       - name: Run tests
         run: python -m pytest tests/ -q
 
