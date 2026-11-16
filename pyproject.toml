@@ -26,9 +26,9 @@ dependencies = ["trimesh>=4.7", "numpy", "shapely", "mapbox-earcut", "DracoPy", 
 dev = ["pytest>=7.0"]
 
 [project.urls]
-Homepage = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator"
-Changelog = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/CHANGELOG.md"
-Issues = "https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/issues"
+Homepage = "https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin"
+Changelog = "https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/blob/main/CHANGELOG.md"
+Issues = "https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/issues"
 Funding = "https://pay.cloudtips.ru/p/5440d07c"
 
 [tool.pytest.ini_options]

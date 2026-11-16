@@ -4,7 +4,7 @@
 
 **Filament calibration inside OrcaSlicer. Pick a spool, open a test plate, slice, print, enter what you measured — the spool's preset is updated for you.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/ValenokMC/Centauri-Carbon-Filament-Calibrator/ci.yml?branch=main&style=flat-square)](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/ValenokMC/OrcaSlicer-Calibration-Plugin/ci.yml?branch=main&style=flat-square)](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/actions)
 [![OrcaSlicer](https://img.shields.io/badge/OrcaSlicer-2.5-F08A2A?style=flat-square)](#compatibility)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows&logoColor=white)](#compatibility)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
@@ -20,7 +20,7 @@
 Filament Lab is a plugin for **OrcaSlicer 2.5**. It adds a calibration tab to the
 slicer and keeps one preset per spool. It replaces the console calibrator of
 version 1.x, which is still available under the
-[`v1.0.0` tag](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/tag/v1.0.0).
+[`v1.0.0` tag](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/releases/tag/v1.0.0).
 
 > **Status: preview.** It is used for real calibrations on a Windows machine
 > with an Elegoo Centauri Carbon. Other printers, a clean install on a fresh
@@ -62,8 +62,8 @@ Materials with scales: **PLA · PETG · PETG-CF · PETG-GF · ABS · ASA · PA �
 There is no 2.x release archive yet. Build the single plugin file from source:
 
 ```powershell
-git clone https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator.git
-cd Centauri-Carbon-Filament-Calibrator
+git clone https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin.git
+cd OrcaSlicer-Calibration-Plugin
 python plugin/build.py dist/kalibrovka.py
 ```
 
@@ -84,7 +84,7 @@ plate opens without the "project or geometry only" question.
 | Other printers in Orca | ⚠️ Plates follow the selected printer and bed size; a Prusa MINI profile sliced correctly, nothing else is tested |
 | Clean install on a fresh Orca profile | ⚠️ Not yet checked |
 | macOS, Linux | ❌ Not supported — the plate loader uses a Windows-only call |
-| OrcaSlicer 2.4 and older | ❌ No plugin API — use the [console v1.0.0](https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/releases/tag/v1.0.0) |
+| OrcaSlicer 2.4 and older | ❌ No plugin API — use the [console v1.0.0](https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/releases/tag/v1.0.0) |
 
 **Interface language:** Russian. An English interface is planned.
 

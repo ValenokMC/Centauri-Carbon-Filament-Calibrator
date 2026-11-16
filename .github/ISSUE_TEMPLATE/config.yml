@@ -5,13 +5,13 @@ blank_issues_enabled: false
 
 contact_links:
   - name: Question or idea
-    url: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/discussions
+    url: https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/discussions
     about: >
       Anything that is not a reproducible bug. Setup questions, "is this
       supposed to happen", ideas, or showing what you printed.
 
   - name: Documentation
-    url: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/blob/main/README.md
+    url: https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/blob/main/README.md
     about: What the plugin does, how to install it, where data lives.
 
   - name: Write to the author on Telegram
@@ -20,6 +20,6 @@ contact_links:
       If you do not have a GitHub account, or would rather not write in public.
 
   - name: Report a security vulnerability
-    url: https://github.com/ValenokMC/Centauri-Carbon-Filament-Calibrator/security/policy
+    url: https://github.com/ValenokMC/OrcaSlicer-Calibration-Plugin/security/policy
     about: >
       Do NOT open a public issue for a vulnerability. Use private reporting.
