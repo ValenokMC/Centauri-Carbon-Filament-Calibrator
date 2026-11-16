@@ -11,7 +11,8 @@
 :root{
   --bg:oklch(17% .03 265); --card:oklch(100% 0 0 / .055); --card2:oklch(100% 0 0 / .1);
   --fg:oklch(96% .01 265); --muted:oklch(74% .03 265); --line:oklch(100% 0 0 / .13);
-  --field:oklch(0% 0 0 / .25);
+  --field:oklch(0% 0 0 / .25); --menu:oklch(22% .03 265); --menu-hi:oklch(100% 0 0 / .1);
+  color-scheme:dark;
   --acc:oklch(86% .13 180); --acc2:oklch(84% .1 225); --on-acc:oklch(22% .04 200);
   --ok:oklch(86% .16 150); --warn:oklch(84% .15 85); --bad:oklch(78% .13 22);
   --shadow:0 18px 44px oklch(0% 0 0 / .35); --blob:.5;
@@ -21,7 +22,8 @@
 [data-theme=light]{
   --bg:oklch(95% .015 265); --card:oklch(100% 0 0 / .6); --card2:oklch(100% 0 0 / .9);
   --fg:oklch(24% .04 265); --muted:oklch(48% .04 265); --line:oklch(30% .05 265 / .14);
-  --field:oklch(100% 0 0 / .75);
+  --field:oklch(100% 0 0 / .75); --menu:oklch(99% .004 265); --menu-hi:oklch(58% .11 185 / .13);
+  color-scheme:light;
   --acc:oklch(58% .11 185); --acc2:oklch(56% .13 235); --on-acc:oklch(99% 0 0);
   --ok:oklch(52% .14 150); --warn:oklch(55% .13 70); --bad:oklch(52% .18 25);
   --shadow:0 16px 40px oklch(40% .06 265 / .14); --blob:.36;
@@ -182,11 +184,32 @@ body tr:hover td{background:none}
 .app .banner button{margin-left:auto;background:none;border:0;color:var(--muted);font-size:18px}
 .toast{position:fixed;left:50%;bottom:24px;translate:-50% 90px;padding:12px 20px;border-radius:15px;z-index:9;transition:translate .3s;font-weight:600;max-width:90vw}
 .toast.show{translate:-50% 0}
-.veil{position:fixed;inset:0;background:oklch(10% .03 265 / .55);z-index:8;display:none;place-items:center;padding:16px}
+.veil{position:fixed;inset:0;background:oklch(10% .03 265 / .55);z-index:8;display:none;place-items:safe center;padding:16px;overflow-y:auto}
 .veil.show{display:grid}
 .dlg{width:min(460px,100%);padding:22px;display:grid;gap:13px}
 .dlg h4{margin:0;font:650 20px var(--display);color:var(--fg)}
 .dlg label{display:grid;gap:5px;font-size:13px;color:var(--muted)}
+/* Список производителей свой, а не <datalist>: системное окно подсказок рисуется
+   белым в тёмной теме и не берёт ни цвета, ни шрифт панели. */
+.combo-field{display:grid;gap:5px}
+.combo{position:relative;display:grid}
+.dlg .combo input{width:100%;padding-right:40px}
+.dlg .combo-toggle{position:absolute;top:0;right:0;bottom:0;width:38px;border:0;border-radius:0 12px 12px 0;background:none;display:grid;place-items:center}
+.combo-toggle::after{content:"";width:7px;height:7px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg)}
+.combo-toggle:hover::after,.combo input[aria-expanded=true]+.combo-toggle::after{border-color:var(--fg)}
+.combo input[aria-expanded=true]+.combo-toggle::after{transform:translateY(2px) rotate(225deg)}
+.combo input[aria-expanded=true]{border-color:var(--acc)}
+.dlg .combo-list{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:3;margin:0;padding:5px;list-style:none;
+  max-height:228px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;background:var(--menu);box-shadow:var(--shadow);
+  scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
+.combo-list[hidden]{display:none}
+.dlg .combo-list.up{top:auto;bottom:calc(100% + 5px)}
+.combo-list::-webkit-scrollbar{width:8px}
+.combo-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+.combo-list::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.dlg .combo-list li{margin:0;padding:8px 11px;border-radius:8px;font-size:14px;color:var(--fg);background:none;cursor:pointer;overflow-wrap:anywhere}
+.dlg .combo-list li[aria-selected=true]{background:var(--menu-hi);box-shadow:inset 3px 0 0 var(--acc)}
+.combo-list mark{background:none;color:var(--acc);font-weight:650}
 .empty{padding:44px 20px;text-align:center;color:var(--muted)}
 details summary{cursor:pointer}
 details.note[open]{max-width:66ch}
@@ -270,7 +293,10 @@ body pre{background:none;color:var(--muted);white-space:pre-wrap;overflow-wrap:a
   <label>Материал<select id="nMat"></select></label>
   <label>Базовый профиль Orca<select id="nBase" required></select></label>
   <p class="note" id="nBaseInfo"></p>
-  <label>Производитель<input type="text" id="nVendor" list="vendors" placeholder="ELEGOO" required><datalist id="vendors"></datalist></label>
+  <div class="combo-field"><label for="nVendor">Производитель</label>
+    <div class="combo"><input type="text" id="nVendor" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="vendorList" autocomplete="off" placeholder="ELEGOO" required>
+      <button type="button" class="combo-toggle" id="vendorToggle" tabindex="-1" aria-label="Показать производителей"></button>
+      <ul class="combo-list" id="vendorList" role="listbox" aria-label="Производители" hidden></ul></div></div>
   <label>Название с этикетки<input type="text" id="nName" placeholder="Matte PLA" required></label>
   <div class="note" id="nPreview"></div>
   <div class="btns"><button class="btn pri" type="submit">Завести</button><button class="btn" type="button" id="nCancel">Отмена</button></div>
@@ -621,10 +647,60 @@ async function loadBases(){
 $('nMat').onchange=loadBases;
 $('add').onclick=()=>{ if(!S)return;
   $('nMat').innerHTML=(S.порядок||Object.keys(S.материалы)).map(m=>`<option>${esc(m)}</option>`).join('');
-  $('vendors').innerHTML=S.производители.map(v=>`<option value="${esc(v)}">`).join('');
+  vendors.items=(S.производители||[]).slice();vendorOpen(false);
   $('nVendor').value='';$('nName').value='';$('nPreview').textContent='';$('nPreview').style.color='';$('veil').classList.add('show');$('nVendor').focus();loadBases()};
 const nPrev=()=>{$('nPreview').style.color='';$('nPreview').textContent=($('nVendor').value||$('nName').value)?'В Orca пластик будет называться «'+($('nVendor').value+' '+$('nName').value).trim()+'»':''};
 $('nVendor').oninput=$('nName').oninput=nPrev;
+
+/* Производитель: свой список вместо <datalist>. Можно выбрать из списка или
+   вписать своего — поле остаётся обычным текстом. */
+const vendors={items:[],shown:[],active:-1};
+function vendorOpen(on){
+  const list=$('vendorList'), input=$('nVendor');
+  list.hidden=!on; input.setAttribute('aria-expanded',String(on));
+  if(!on){vendors.active=-1;input.removeAttribute('aria-activedescendant');return}
+  // В низком окне Orca под полем может не хватить места — тогда список раскрывается вверх.
+  const box=input.getBoundingClientRect(), need=Math.min(list.scrollHeight,228)+8;
+  list.classList.toggle('up',innerHeight-box.bottom<need&&box.top>innerHeight-box.bottom);
+}
+function vendorRender(all){
+  const q=$('nVendor').value.trim().toLowerCase();
+  vendors.shown=all||!q?vendors.items:vendors.items.filter(v=>v.toLowerCase().includes(q));
+  vendors.active=-1;
+  $('vendorList').innerHTML=vendors.shown.map((v,i)=>{
+    const at=q&&!all?v.toLowerCase().indexOf(q):-1;
+    const text=at<0?esc(v):esc(v.slice(0,at))+'<mark>'+esc(v.slice(at,at+q.length))+'</mark>'+esc(v.slice(at+q.length));
+    return `<li role="option" id="vendorOpt${i}" aria-selected="false">${text}</li>`}).join('');
+  vendorOpen(vendors.shown.length>0);
+}
+function vendorMove(i,scroll){
+  const n=vendors.shown.length;if(!n)return;
+  vendors.active=(i+n)%n;
+  const items=[...$('vendorList').children];
+  items.forEach((li,k)=>li.setAttribute('aria-selected',String(k===vendors.active)));
+  $('nVendor').setAttribute('aria-activedescendant',items[vendors.active].id);
+  if(scroll)items[vendors.active].scrollIntoView({block:'nearest'});
+}
+function vendorPick(i){$('nVendor').value=vendors.shown[i];vendorOpen(false);nPrev()}
+$('nVendor').addEventListener('input',()=>vendorRender(false));
+$('nVendor').addEventListener('blur',()=>vendorOpen(false));
+$('nVendor').addEventListener('keydown',e=>{
+  const open=!$('vendorList').hidden;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    if(!open)vendorRender(false);
+    vendorMove(vendors.active<0?(e.key==='ArrowDown'?0:-1):vendors.active+(e.key==='ArrowDown'?1:-1),true);
+  }else if(!open){return}
+  else if(e.key==='Enter'&&vendors.active>=0){e.preventDefault();vendorPick(vendors.active)}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();vendorOpen(false)}
+  else if(e.key==='Tab'){vendorOpen(false)}
+});
+// Нажатие в списке не должно уводить фокус из поля, иначе список закроется до выбора.
+$('vendorList').addEventListener('mousedown',e=>e.preventDefault());
+$('vendorList').addEventListener('click',e=>{const li=e.target.closest('li');if(li)vendorPick([...$('vendorList').children].indexOf(li))});
+$('vendorList').addEventListener('mousemove',e=>{const li=e.target.closest('li');if(li&&li.getAttribute('aria-selected')!=='true')vendorMove([...$('vendorList').children].indexOf(li),false)});
+$('vendorToggle').addEventListener('mousedown',e=>e.preventDefault());
+$('vendorToggle').onclick=()=>{if($('vendorList').hidden){$('nVendor').focus();vendorRender(true)}else vendorOpen(false)};
 $('nCancel').onclick=()=>$('veil').classList.remove('show');
 $('veil').onclick=e=>{if(e.target===$('veil'))$('veil').classList.remove('show')};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('veil').classList.remove('show')});
